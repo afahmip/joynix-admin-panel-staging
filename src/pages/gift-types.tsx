@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { API_CONFIG, API_ENDPOINTS } from '../config/api'
 
 interface GiftType {
   id: number
@@ -32,7 +33,7 @@ interface ApiResponse {
 }
 
 async function fetchGiftTypes(): Promise<ApiResponse> {
-  const response = await fetch('https://stg.joynix.id/api/v1/gifts/types')
+  const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.GIFT_TYPES}`)
   if (!response.ok) {
     throw new Error('Failed to fetch gift types')
   }
@@ -40,12 +41,9 @@ async function fetchGiftTypes(): Promise<ApiResponse> {
 }
 
 async function updateGiftType(id: number, data: Partial<GiftType>): Promise<ApiResponse> {
-  const response = await fetch(`https://stg.joynix.id/api/v1/gifts/types/${id}`, {
+  const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.GIFT_TYPE_BY_ID(id)}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Admin-User-Id': '-1',
-    },
+    headers: API_CONFIG.HEADERS,
     body: JSON.stringify(data),
   })
   if (!response.ok) {
@@ -78,12 +76,9 @@ interface CreateApiResponse {
 }
 
 async function createGiftType(data: CreateGiftTypeData): Promise<CreateApiResponse> {
-  const response = await fetch('https://stg.joynix.id/api/v1/gifts/types', {
+  const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.GIFT_TYPES}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Admin-User-Id': '-1',
-    },
+    headers: API_CONFIG.HEADERS,
     body: JSON.stringify(data),
   })
   if (!response.ok) {
