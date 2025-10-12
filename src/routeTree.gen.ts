@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyTalentRouteImport } from './routes/verify-talent'
+import { Route as GiftTypesRouteImport } from './routes/gift-types'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as DemoTableRouteImport } from './routes/demo/table'
@@ -23,6 +25,16 @@ import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
 import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
 
+const VerifyTalentRoute = VerifyTalentRouteImport.update({
+  id: '/verify-talent',
+  path: '/verify-talent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GiftTypesRoute = GiftTypesRouteImport.update({
+  id: '/gift-types',
+  path: '/gift-types',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -91,6 +103,8 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/gift-types': typeof GiftTypesRoute
+  '/verify-talent': typeof VerifyTalentRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -106,6 +120,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/gift-types': typeof GiftTypesRoute
+  '/verify-talent': typeof VerifyTalentRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -122,6 +138,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/gift-types': typeof GiftTypesRoute
+  '/verify-talent': typeof VerifyTalentRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -139,6 +157,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/gift-types'
+    | '/verify-talent'
     | '/demo/table'
     | '/demo/tanstack-query'
     | '/demo/api/names'
@@ -154,6 +174,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/gift-types'
+    | '/verify-talent'
     | '/demo/table'
     | '/demo/tanstack-query'
     | '/demo/api/names'
@@ -169,6 +191,8 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/gift-types'
+    | '/verify-talent'
     | '/demo/table'
     | '/demo/tanstack-query'
     | '/demo/api/names'
@@ -185,6 +209,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  GiftTypesRoute: typeof GiftTypesRoute
+  VerifyTalentRoute: typeof VerifyTalentRoute
   DemoTableRoute: typeof DemoTableRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
@@ -201,6 +227,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-talent': {
+      id: '/verify-talent'
+      path: '/verify-talent'
+      fullPath: '/verify-talent'
+      preLoaderRoute: typeof VerifyTalentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gift-types': {
+      id: '/gift-types'
+      path: '/gift-types'
+      fullPath: '/gift-types'
+      preLoaderRoute: typeof GiftTypesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -297,6 +337,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  GiftTypesRoute: GiftTypesRoute,
+  VerifyTalentRoute: VerifyTalentRoute,
   DemoTableRoute: DemoTableRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
