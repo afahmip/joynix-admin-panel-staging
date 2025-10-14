@@ -31,6 +31,7 @@ export const API_ENDPOINTS = {
   GIFT_TYPES: 'gifts/types',
   GIFT_TYPE_BY_ID: (id: number) => `gifts/types/${id}`,
   ACTIVITIES: 'activities',
+  ACTIVITY_BY_ID: (id: number) => `activities/admin/${id}`,
   AUTH_SIGNIN: 'auth/otp-signin',
   AUTH_VERIFY_OTP: 'auth/verify-otp',
   AUTH_REFRESH: 'auth/refresh',
