@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { API_CONFIG, API_ENDPOINTS } from '../config/api'
+import { API_ENDPOINTS } from '../config/api'
+import { apiClient } from '../lib/api-client'
 
 interface GiftType {
   id: number
@@ -33,23 +34,11 @@ interface ApiResponse {
 }
 
 async function fetchGiftTypes(): Promise<ApiResponse> {
-  const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.GIFT_TYPES}`)
-  if (!response.ok) {
-    throw new Error('Failed to fetch gift types')
-  }
-  return response.json()
+  return apiClient.get<ApiResponse>(API_ENDPOINTS.GIFT_TYPES)
 }
 
 async function updateGiftType(id: number, data: Partial<GiftType>): Promise<ApiResponse> {
-  const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.GIFT_TYPE_BY_ID(id)}`, {
-    method: 'PUT',
-    headers: API_CONFIG.HEADERS,
-    body: JSON.stringify(data),
-  })
-  if (!response.ok) {
-    throw new Error('Failed to update gift type')
-  }
-  return response.json()
+  return apiClient.put<ApiResponse>(API_ENDPOINTS.GIFT_TYPE_BY_ID(id), data)
 }
 
 interface CreateGiftTypeData {
@@ -76,15 +65,7 @@ interface CreateApiResponse {
 }
 
 async function createGiftType(data: CreateGiftTypeData): Promise<CreateApiResponse> {
-  const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.GIFT_TYPES}`, {
-    method: 'POST',
-    headers: API_CONFIG.HEADERS,
-    body: JSON.stringify(data),
-  })
-  if (!response.ok) {
-    throw new Error('Failed to create gift type')
-  }
-  return response.json()
+  return apiClient.post<CreateApiResponse>(API_ENDPOINTS.GIFT_TYPES, data)
 }
 
 export function GiftTypesPage() {

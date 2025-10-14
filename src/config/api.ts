@@ -31,4 +31,14 @@ export const API_ENDPOINTS = {
   GIFT_TYPES: 'gifts/types',
   GIFT_TYPE_BY_ID: (id: number) => `gifts/types/${id}`,
   ACTIVITIES: 'activities',
+  AUTH_SIGNIN: 'auth/otp-signin',
+  AUTH_VERIFY_OTP: 'auth/verify-otp',
 } as const
+
+export function getAuthHeaders(accessToken?: string) {
+  if (!accessToken) return API_CONFIG.HEADERS
+  return {
+    ...API_CONFIG.HEADERS,
+    Authorization: `Bearer ${accessToken}`,
+  }
+}

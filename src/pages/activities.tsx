@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { API_CONFIG, API_ENDPOINTS } from '../config/api'
+import { API_ENDPOINTS } from '../config/api'
+import { apiClient } from '../lib/api-client'
 
 interface Activity {
   id: number
@@ -42,11 +43,7 @@ interface ActivitiesApiResponse {
 }
 
 async function fetchActivities(): Promise<ActivitiesApiResponse> {
-  const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.ACTIVITIES}`)
-  if (!response.ok) {
-    throw new Error('Failed to fetch activities')
-  }
-  return response.json()
+  return apiClient.get<ActivitiesApiResponse>(API_ENDPOINTS.ACTIVITIES)
 }
 
 export function ActivitiesPage() {

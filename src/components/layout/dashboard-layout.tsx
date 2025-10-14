@@ -1,10 +1,17 @@
 import { Sidebar } from './sidebar'
+import { useAuth } from '../../hooks/auth'
+import { Navigate } from '@tanstack/react-router'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const { isAuthenticated } = useAuth()
+
+  if (!isAuthenticated) {
+    return <Navigate to="/signin" />
+  }
   return (
     <div className="flex h-screen">
       <Sidebar />

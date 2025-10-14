@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyTalentRouteImport } from './routes/verify-talent'
+import { Route as VerifyOtpRouteImport } from './routes/verify-otp'
+import { Route as SigninRouteImport } from './routes/signin'
 import { Route as GiftTypesRouteImport } from './routes/gift-types'
 import { Route as ActivitiesRouteImport } from './routes/activities'
 import { Route as IndexRouteImport } from './routes/index'
@@ -29,6 +31,16 @@ import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ss
 const VerifyTalentRoute = VerifyTalentRouteImport.update({
   id: '/verify-talent',
   path: '/verify-talent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyOtpRoute = VerifyOtpRouteImport.update({
+  id: '/verify-otp',
+  path: '/verify-otp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GiftTypesRoute = GiftTypesRouteImport.update({
@@ -111,6 +123,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
   '/gift-types': typeof GiftTypesRoute
+  '/signin': typeof SigninRoute
+  '/verify-otp': typeof VerifyOtpRoute
   '/verify-talent': typeof VerifyTalentRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
@@ -129,6 +143,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
   '/gift-types': typeof GiftTypesRoute
+  '/signin': typeof SigninRoute
+  '/verify-otp': typeof VerifyOtpRoute
   '/verify-talent': typeof VerifyTalentRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
@@ -148,6 +164,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
   '/gift-types': typeof GiftTypesRoute
+  '/signin': typeof SigninRoute
+  '/verify-otp': typeof VerifyOtpRoute
   '/verify-talent': typeof VerifyTalentRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
@@ -168,6 +186,8 @@ export interface FileRouteTypes {
     | '/'
     | '/activities'
     | '/gift-types'
+    | '/signin'
+    | '/verify-otp'
     | '/verify-talent'
     | '/demo/table'
     | '/demo/tanstack-query'
@@ -186,6 +206,8 @@ export interface FileRouteTypes {
     | '/'
     | '/activities'
     | '/gift-types'
+    | '/signin'
+    | '/verify-otp'
     | '/verify-talent'
     | '/demo/table'
     | '/demo/tanstack-query'
@@ -204,6 +226,8 @@ export interface FileRouteTypes {
     | '/'
     | '/activities'
     | '/gift-types'
+    | '/signin'
+    | '/verify-otp'
     | '/verify-talent'
     | '/demo/table'
     | '/demo/tanstack-query'
@@ -223,6 +247,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivitiesRoute: typeof ActivitiesRoute
   GiftTypesRoute: typeof GiftTypesRoute
+  SigninRoute: typeof SigninRoute
+  VerifyOtpRoute: typeof VerifyOtpRoute
   VerifyTalentRoute: typeof VerifyTalentRoute
   DemoTableRoute: typeof DemoTableRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
@@ -245,6 +271,20 @@ declare module '@tanstack/react-router' {
       path: '/verify-talent'
       fullPath: '/verify-talent'
       preLoaderRoute: typeof VerifyTalentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify-otp': {
+      id: '/verify-otp'
+      path: '/verify-otp'
+      fullPath: '/verify-otp'
+      preLoaderRoute: typeof VerifyOtpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gift-types': {
@@ -359,6 +399,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivitiesRoute: ActivitiesRoute,
   GiftTypesRoute: GiftTypesRoute,
+  SigninRoute: SigninRoute,
+  VerifyOtpRoute: VerifyOtpRoute,
   VerifyTalentRoute: VerifyTalentRoute,
   DemoTableRoute: DemoTableRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,

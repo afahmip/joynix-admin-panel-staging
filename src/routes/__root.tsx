@@ -14,6 +14,7 @@ import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 import appCss from '../styles.css?url'
 
 import type { QueryClient } from '@tanstack/react-query'
+import { AuthProvider } from '../hooks/auth'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -55,7 +56,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {isDemoRoute && <Header />}
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <TanStackDevtools
           config={{
             position: 'bottom-right',
