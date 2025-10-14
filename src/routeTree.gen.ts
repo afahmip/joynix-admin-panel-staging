@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyTalentRouteImport } from './routes/verify-talent'
 import { Route as GiftTypesRouteImport } from './routes/gift-types'
+import { Route as ActivitiesRouteImport } from './routes/activities'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as DemoTableRouteImport } from './routes/demo/table'
@@ -33,6 +34,11 @@ const VerifyTalentRoute = VerifyTalentRouteImport.update({
 const GiftTypesRoute = GiftTypesRouteImport.update({
   id: '/gift-types',
   path: '/gift-types',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivitiesRoute = ActivitiesRouteImport.update({
+  id: '/activities',
+  path: '/activities',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -103,6 +109,7 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/activities': typeof ActivitiesRoute
   '/gift-types': typeof GiftTypesRoute
   '/verify-talent': typeof VerifyTalentRoute
   '/demo/table': typeof DemoTableRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/activities': typeof ActivitiesRoute
   '/gift-types': typeof GiftTypesRoute
   '/verify-talent': typeof VerifyTalentRoute
   '/demo/table': typeof DemoTableRoute
@@ -138,6 +146,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/activities': typeof ActivitiesRoute
   '/gift-types': typeof GiftTypesRoute
   '/verify-talent': typeof VerifyTalentRoute
   '/demo/table': typeof DemoTableRoute
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/activities'
     | '/gift-types'
     | '/verify-talent'
     | '/demo/table'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/activities'
     | '/gift-types'
     | '/verify-talent'
     | '/demo/table'
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/activities'
     | '/gift-types'
     | '/verify-talent'
     | '/demo/table'
@@ -209,6 +221,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActivitiesRoute: typeof ActivitiesRoute
   GiftTypesRoute: typeof GiftTypesRoute
   VerifyTalentRoute: typeof VerifyTalentRoute
   DemoTableRoute: typeof DemoTableRoute
@@ -239,6 +252,13 @@ declare module '@tanstack/react-router' {
       path: '/gift-types'
       fullPath: '/gift-types'
       preLoaderRoute: typeof GiftTypesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activities': {
+      id: '/activities'
+      path: '/activities'
+      fullPath: '/activities'
+      preLoaderRoute: typeof ActivitiesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -337,6 +357,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActivitiesRoute: ActivitiesRoute,
   GiftTypesRoute: GiftTypesRoute,
   VerifyTalentRoute: VerifyTalentRoute,
   DemoTableRoute: DemoTableRoute,

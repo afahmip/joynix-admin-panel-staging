@@ -1,9 +1,10 @@
 import { Link } from '@tanstack/react-router'
-import { GiftIcon, CheckCircleIcon, HomeIcon } from 'lucide-react'
+import { GiftIcon, CheckCircleIcon, HomeIcon, ActivityIcon } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'Gift Types', href: '/gift-types', icon: GiftIcon },
+  { name: 'Activities', href: '/activities', icon: ActivityIcon },
   { name: 'Verify Talent Request', href: '/verify-talent', icon: CheckCircleIcon },
 ]
 
@@ -18,13 +19,11 @@ export function Sidebar() {
           <Link
             key={item.name}
             to={item.href}
-            className={({ isActive }) =>
-              `group flex items-center rounded-md px-2 py-2 text-sm font-medium ${
-                isActive
-                  ? 'bg-gray-100 text-gray-900'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`
+            className={
+              'group flex items-center rounded-md px-2 py-2 text-sm font-medium'
             }
+            activeProps={{ className: 'bg-gray-100 text-gray-900' }}
+            inactiveProps={{ className: 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}
           >
             <item.icon
               className="mr-3 h-6 w-6 flex-shrink-0"
