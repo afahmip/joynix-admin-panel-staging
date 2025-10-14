@@ -68,10 +68,24 @@ async function createGiftType(data: CreateGiftTypeData): Promise<CreateApiRespon
   return apiClient.post<CreateApiResponse>(API_ENDPOINTS.GIFT_TYPES, data)
 }
 
+interface DeleteApiResponse {
+  data: string
+  message: string
+  metadata: string
+  status: number
+  success: boolean
+}
+
+async function deleteGiftType(id: number): Promise<DeleteApiResponse> {
+  return apiClient.delete<DeleteApiResponse>(API_ENDPOINTS.GIFT_TYPE_BY_ID(id))
+}
+
 export function GiftTypesPage() {
   const [selectedGiftType, setSelectedGiftType] = useState<GiftType | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [giftTypeToDelete, setGiftTypeToDelete] = useState<GiftType | null>(null)
   const [editData, setEditData] = useState<Partial<GiftType>>({})
   const [createData, setCreateData] = useState<CreateGiftTypeData>({
     name: '',
@@ -112,6 +126,15 @@ export function GiftTypesPage() {
         animation_url: '',
         is_active: true,
       })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteGiftType(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gift-types'] })
+      setIsDeleteModalOpen(false)
+      setGiftTypeToDelete(null)
     },
   })
 
@@ -159,6 +182,23 @@ export function GiftTypesPage() {
       animation_url: '',
       is_active: true,
     })
+  }
+
+  const handleDeleteClick = (giftType: GiftType, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setGiftTypeToDelete(giftType)
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleDeleteConfirm = () => {
+    if (giftTypeToDelete) {
+      deleteMutation.mutate(giftTypeToDelete.id)
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setIsDeleteModalOpen(false)
+    setGiftTypeToDelete(null)
   }
 
   if (isLoading) {
@@ -226,6 +266,9 @@ export function GiftTypesPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Created At
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -269,6 +312,14 @@ export function GiftTypesPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(giftType.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <button
+                      onClick={(e) => handleDeleteClick(giftType, e)}
+                      className="px-3 py-1 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -463,6 +514,42 @@ export function GiftTypesPage() {
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {createMutation.isPending ? 'Creating...' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && giftTypeToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900">
+                Delete Gift Type
+              </h3>
+            </div>
+            
+            <div className="px-6 py-4">
+              <p className="text-sm text-gray-600 mb-4">
+                Are you sure you want to delete <strong>{giftTypeToDelete.name}</strong>? 
+                This action cannot be undone.
+              </p>
+            </div>
+            
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+              <button
+                onClick={handleDeleteCancel}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleteMutation.isPending}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
