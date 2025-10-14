@@ -32,10 +32,19 @@ type VerifyOtpResponse = {
   user: User
 }
 
+type RefreshTokenResponse = {
+  access_token: string
+  expires_in: number
+  id_token: string
+  refresh_token: string
+  token_type: string
+}
+
 type AuthContextValue = AuthState & {
   isAuthenticated: boolean
   signin: (identifier: string) => Promise<SignInResponse>
   verifyOtp: (sessionId: string, otp: string) => Promise<VerifyOtpResponse>
+  refreshToken: () => Promise<RefreshTokenResponse>
   signout: () => void
 }
 
@@ -80,6 +89,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!res.ok) throw new Error('Failed to verify OTP')
         const data = (await res.json()) as VerifyOtpResponse
         setState({ accessToken: data.access_token, refreshToken: data.refresh_token, user: data.user })
+        return data
+      },
+      async refreshToken() {
+        if (!state.refreshToken || !state.user) {
+          throw new Error('No refresh token or user available')
+        }
+        
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL_DEV || 'https://stg.joynix.id/api/v1/'}auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            refresh_token: state.refreshToken, 
+            user_id: state.user.id 
+          }),
+        })
+        
+        if (!res.ok) throw new Error('Failed to refresh token')
+        const data = (await res.json()) as RefreshTokenResponse
+        
+        setState(prev => ({ 
+          ...prev, 
+          accessToken: data.access_token, 
+          refreshToken: data.refresh_token 
+        }))
+        
         return data
       },
       signout() {

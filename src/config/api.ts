@@ -33,6 +33,7 @@ export const API_ENDPOINTS = {
   ACTIVITIES: 'activities',
   AUTH_SIGNIN: 'auth/otp-signin',
   AUTH_VERIFY_OTP: 'auth/verify-otp',
+  AUTH_REFRESH: 'auth/refresh',
 } as const
 
 export function getAuthHeaders(accessToken?: string) {
