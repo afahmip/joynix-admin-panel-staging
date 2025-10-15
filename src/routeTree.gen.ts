@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyTalentRouteImport } from './routes/verify-talent'
 import { Route as VerifyOtpRouteImport } from './routes/verify-otp'
+import { Route as UserReportsRouteImport } from './routes/user-reports'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as GiftTypesRouteImport } from './routes/gift-types'
 import { Route as ActivitiesRouteImport } from './routes/activities'
@@ -36,6 +37,11 @@ const VerifyTalentRoute = VerifyTalentRouteImport.update({
 const VerifyOtpRoute = VerifyOtpRouteImport.update({
   id: '/verify-otp',
   path: '/verify-otp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UserReportsRoute = UserReportsRouteImport.update({
+  id: '/user-reports',
+  path: '/user-reports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SigninRoute = SigninRouteImport.update({
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/activities': typeof ActivitiesRoute
   '/gift-types': typeof GiftTypesRoute
   '/signin': typeof SigninRoute
+  '/user-reports': typeof UserReportsRoute
   '/verify-otp': typeof VerifyOtpRoute
   '/verify-talent': typeof VerifyTalentRoute
   '/demo/table': typeof DemoTableRoute
@@ -144,6 +151,7 @@ export interface FileRoutesByTo {
   '/activities': typeof ActivitiesRoute
   '/gift-types': typeof GiftTypesRoute
   '/signin': typeof SigninRoute
+  '/user-reports': typeof UserReportsRoute
   '/verify-otp': typeof VerifyOtpRoute
   '/verify-talent': typeof VerifyTalentRoute
   '/demo/table': typeof DemoTableRoute
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/activities': typeof ActivitiesRoute
   '/gift-types': typeof GiftTypesRoute
   '/signin': typeof SigninRoute
+  '/user-reports': typeof UserReportsRoute
   '/verify-otp': typeof VerifyOtpRoute
   '/verify-talent': typeof VerifyTalentRoute
   '/demo/table': typeof DemoTableRoute
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
     | '/activities'
     | '/gift-types'
     | '/signin'
+    | '/user-reports'
     | '/verify-otp'
     | '/verify-talent'
     | '/demo/table'
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | '/activities'
     | '/gift-types'
     | '/signin'
+    | '/user-reports'
     | '/verify-otp'
     | '/verify-talent'
     | '/demo/table'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | '/activities'
     | '/gift-types'
     | '/signin'
+    | '/user-reports'
     | '/verify-otp'
     | '/verify-talent'
     | '/demo/table'
@@ -248,6 +260,7 @@ export interface RootRouteChildren {
   ActivitiesRoute: typeof ActivitiesRoute
   GiftTypesRoute: typeof GiftTypesRoute
   SigninRoute: typeof SigninRoute
+  UserReportsRoute: typeof UserReportsRoute
   VerifyOtpRoute: typeof VerifyOtpRoute
   VerifyTalentRoute: typeof VerifyTalentRoute
   DemoTableRoute: typeof DemoTableRoute
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       path: '/verify-otp'
       fullPath: '/verify-otp'
       preLoaderRoute: typeof VerifyOtpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user-reports': {
+      id: '/user-reports'
+      path: '/user-reports'
+      fullPath: '/user-reports'
+      preLoaderRoute: typeof UserReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signin': {
@@ -400,6 +420,7 @@ const rootRouteChildren: RootRouteChildren = {
   ActivitiesRoute: ActivitiesRoute,
   GiftTypesRoute: GiftTypesRoute,
   SigninRoute: SigninRoute,
+  UserReportsRoute: UserReportsRoute,
   VerifyOtpRoute: VerifyOtpRoute,
   VerifyTalentRoute: VerifyTalentRoute,
   DemoTableRoute: DemoTableRoute,

@@ -37,6 +37,8 @@ export const API_ENDPOINTS = {
   AUTH_REFRESH: 'auth/refresh',
   PROMOTE_TALENT: (userId: number | string) => `users/admin/${userId}/promote-to-talent`,
   USER_BY_ID: (userId: number | string) => `users/${userId}`,
+  USER_REPORTS: 'users/admin/reports',
+  USER_REPORT_BY_ID: (id: number | string) => `users/admin/reports/${id}`,
 } as const
 
 export function getAuthHeaders(accessToken?: string) {
