@@ -15,6 +15,7 @@ import { Route as UserReportsRouteImport } from './routes/user-reports'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as GroupCallsRouteImport } from './routes/group-calls'
 import { Route as GiftTypesRouteImport } from './routes/gift-types'
+import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as ActivitiesRouteImport } from './routes/activities'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
@@ -58,6 +59,11 @@ const GroupCallsRoute = GroupCallsRouteImport.update({
 const GiftTypesRoute = GiftTypesRouteImport.update({
   id: '/gift-types',
   path: '/gift-types',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CategoriesRoute = CategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ActivitiesRoute = ActivitiesRouteImport.update({
@@ -134,6 +140,7 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
+  '/categories': typeof CategoriesRoute
   '/gift-types': typeof GiftTypesRoute
   '/group-calls': typeof GroupCallsRoute
   '/signin': typeof SigninRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
+  '/categories': typeof CategoriesRoute
   '/gift-types': typeof GiftTypesRoute
   '/group-calls': typeof GroupCallsRoute
   '/signin': typeof SigninRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
+  '/categories': typeof CategoriesRoute
   '/gift-types': typeof GiftTypesRoute
   '/group-calls': typeof GroupCallsRoute
   '/signin': typeof SigninRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/activities'
+    | '/categories'
     | '/gift-types'
     | '/group-calls'
     | '/signin'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/activities'
+    | '/categories'
     | '/gift-types'
     | '/group-calls'
     | '/signin'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/activities'
+    | '/categories'
     | '/gift-types'
     | '/group-calls'
     | '/signin'
@@ -270,6 +282,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivitiesRoute: typeof ActivitiesRoute
+  CategoriesRoute: typeof CategoriesRoute
   GiftTypesRoute: typeof GiftTypesRoute
   GroupCallsRoute: typeof GroupCallsRoute
   SigninRoute: typeof SigninRoute
@@ -332,6 +345,13 @@ declare module '@tanstack/react-router' {
       path: '/gift-types'
       fullPath: '/gift-types'
       preLoaderRoute: typeof GiftTypesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/categories': {
+      id: '/categories'
+      path: '/categories'
+      fullPath: '/categories'
+      preLoaderRoute: typeof CategoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/activities': {
@@ -438,6 +458,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivitiesRoute: ActivitiesRoute,
+  CategoriesRoute: CategoriesRoute,
   GiftTypesRoute: GiftTypesRoute,
   GroupCallsRoute: GroupCallsRoute,
   SigninRoute: SigninRoute,

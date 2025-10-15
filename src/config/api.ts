@@ -42,6 +42,11 @@ export const API_ENDPOINTS = {
   USER_BY_ID: (userId: number | string) => `users/${userId}`,
   USER_REPORTS: 'users/admin/reports',
   USER_REPORT_BY_ID: (id: number | string) => `users/admin/reports/${id}`,
+  // Categories
+  CATEGORIES: 'categories',
+  CATEGORY_BY_ID: (id: number | string) => `categories/${id}`,
+  CATEGORY_CREATE_ADMIN: 'categories/admin',
+  CATEGORY_ADMIN_BY_ID: (id: number | string) => `categories/admin/${id}`,
 } as const
 
 export function getAuthHeaders(accessToken?: string) {
