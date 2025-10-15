@@ -35,6 +35,8 @@ export const API_ENDPOINTS = {
   AUTH_SIGNIN: 'auth/otp-signin',
   AUTH_VERIFY_OTP: 'auth/verify-otp',
   AUTH_REFRESH: 'auth/refresh',
+  PROMOTE_TALENT: (userId: number | string) => `users/admin/${userId}/promote-to-talent`,
+  USER_BY_ID: (userId: number | string) => `users/${userId}`,
 } as const
 
 export function getAuthHeaders(accessToken?: string) {

@@ -6,7 +6,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'Gift Types', href: '/gift-types', icon: GiftIcon },
   { name: 'Activities', href: '/activities', icon: ActivityIcon },
-  { name: 'Verify Talent Request', href: '/verify-talent', icon: CheckCircleIcon },
+  { name: 'Promote User to Talent', href: '/verify-talent', icon: CheckCircleIcon },
 ]
 
 export function Sidebar() {
