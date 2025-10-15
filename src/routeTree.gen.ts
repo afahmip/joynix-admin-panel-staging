@@ -13,6 +13,7 @@ import { Route as VerifyTalentRouteImport } from './routes/verify-talent'
 import { Route as VerifyOtpRouteImport } from './routes/verify-otp'
 import { Route as UserReportsRouteImport } from './routes/user-reports'
 import { Route as SigninRouteImport } from './routes/signin'
+import { Route as GroupCallsRouteImport } from './routes/group-calls'
 import { Route as GiftTypesRouteImport } from './routes/gift-types'
 import { Route as ActivitiesRouteImport } from './routes/activities'
 import { Route as IndexRouteImport } from './routes/index'
@@ -47,6 +48,11 @@ const UserReportsRoute = UserReportsRouteImport.update({
 const SigninRoute = SigninRouteImport.update({
   id: '/signin',
   path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GroupCallsRoute = GroupCallsRouteImport.update({
+  id: '/group-calls',
+  path: '/group-calls',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GiftTypesRoute = GiftTypesRouteImport.update({
@@ -129,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
   '/gift-types': typeof GiftTypesRoute
+  '/group-calls': typeof GroupCallsRoute
   '/signin': typeof SigninRoute
   '/user-reports': typeof UserReportsRoute
   '/verify-otp': typeof VerifyOtpRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
   '/gift-types': typeof GiftTypesRoute
+  '/group-calls': typeof GroupCallsRoute
   '/signin': typeof SigninRoute
   '/user-reports': typeof UserReportsRoute
   '/verify-otp': typeof VerifyOtpRoute
@@ -172,6 +180,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
   '/gift-types': typeof GiftTypesRoute
+  '/group-calls': typeof GroupCallsRoute
   '/signin': typeof SigninRoute
   '/user-reports': typeof UserReportsRoute
   '/verify-otp': typeof VerifyOtpRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/'
     | '/activities'
     | '/gift-types'
+    | '/group-calls'
     | '/signin'
     | '/user-reports'
     | '/verify-otp'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/'
     | '/activities'
     | '/gift-types'
+    | '/group-calls'
     | '/signin'
     | '/user-reports'
     | '/verify-otp'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/'
     | '/activities'
     | '/gift-types'
+    | '/group-calls'
     | '/signin'
     | '/user-reports'
     | '/verify-otp'
@@ -259,6 +271,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivitiesRoute: typeof ActivitiesRoute
   GiftTypesRoute: typeof GiftTypesRoute
+  GroupCallsRoute: typeof GroupCallsRoute
   SigninRoute: typeof SigninRoute
   UserReportsRoute: typeof UserReportsRoute
   VerifyOtpRoute: typeof VerifyOtpRoute
@@ -305,6 +318,13 @@ declare module '@tanstack/react-router' {
       path: '/signin'
       fullPath: '/signin'
       preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/group-calls': {
+      id: '/group-calls'
+      path: '/group-calls'
+      fullPath: '/group-calls'
+      preLoaderRoute: typeof GroupCallsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gift-types': {
@@ -419,6 +439,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivitiesRoute: ActivitiesRoute,
   GiftTypesRoute: GiftTypesRoute,
+  GroupCallsRoute: GroupCallsRoute,
   SigninRoute: SigninRoute,
   UserReportsRoute: UserReportsRoute,
   VerifyOtpRoute: VerifyOtpRoute,

@@ -1,11 +1,12 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { GiftIcon, CheckCircleIcon, HomeIcon, ActivityIcon, FlagIcon } from 'lucide-react'
+import { GiftIcon, CheckCircleIcon, HomeIcon, ActivityIcon, FlagIcon, PhoneCallIcon } from 'lucide-react'
 import { useAuth } from '../../hooks/auth'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'Gift Types', href: '/gift-types', icon: GiftIcon },
   { name: 'Activities', href: '/activities', icon: ActivityIcon },
+  { name: 'Group Calls', href: '/group-calls', icon: PhoneCallIcon },
   { name: 'User Reports', href: '/user-reports', icon: FlagIcon },
   { name: 'Promote User to Talent', href: '/verify-talent', icon: CheckCircleIcon },
 ]
