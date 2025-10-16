@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { API_CONFIG, API_ENDPOINTS } from '../config/api'
 
 type User = {
   id: string
@@ -44,7 +45,7 @@ type AuthContextValue = AuthState & {
   isAuthenticated: boolean
   signin: (identifier: string) => Promise<SignInResponse>
   verifyOtp: (sessionId: string, otp: string) => Promise<VerifyOtpResponse>
-  refreshToken: () => Promise<RefreshTokenResponse>
+  refreshTokens: () => Promise<RefreshTokenResponse>
   signout: () => void
 }
 
@@ -72,18 +73,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ...state,
       isAuthenticated: !!state.accessToken,
       async signin(identifier: string) {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL_DEV || 'https://stg.joynix.id/api/v1/'}auth/otp-signin`, {
+        const res = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.AUTH_SIGNIN}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: API_CONFIG.HEADERS,
           body: JSON.stringify({ identifier }),
         })
         if (!res.ok) throw new Error('Failed to initiate sign in')
         return res.json()
       },
       async verifyOtp(sessionId: string, otp: string) {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL_DEV || 'https://stg.joynix.id/api/v1/'}auth/verify-otp`, {
+        const res = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.AUTH_VERIFY_OTP}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: API_CONFIG.HEADERS,
           body: JSON.stringify({ session_id: sessionId, otp }),
         })
         if (!res.ok) throw new Error('Failed to verify OTP')
@@ -91,14 +92,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setState({ accessToken: data.access_token, refreshToken: data.refresh_token, user: data.user })
         return data
       },
-      async refreshToken() {
+      async refreshTokens() {
         if (!state.refreshToken || !state.user) {
           throw new Error('No refresh token or user available')
         }
         
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL_DEV || 'https://stg.joynix.id/api/v1/'}auth/refresh`, {
+        const res = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.AUTH_REFRESH}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: API_CONFIG.HEADERS,
           body: JSON.stringify({ 
             refresh_token: state.refreshToken, 
             user_id: state.user.id 
