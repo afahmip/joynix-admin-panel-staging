@@ -12,4 +12,5 @@ export default [
   route("user-reports", "routes/user-reports.tsx"),
   route("verify-talent", "routes/verify-talent.tsx"),
   route("avatar-borders", "routes/avatar-borders.tsx"),
+  route("badges", "routes/badges.tsx"),
 ] satisfies RouteConfig;
