@@ -1,5 +1,5 @@
 import { Link } from "react-router"
-import { GiftIcon, CheckCircleIcon, HomeIcon, ActivityIcon, FlagIcon, PhoneCallIcon, TagsIcon } from 'lucide-react'
+import { GiftIcon, CheckCircleIcon, HomeIcon, ActivityIcon, FlagIcon, PhoneCallIcon, TagsIcon, PaletteIcon } from 'lucide-react'
 import { useAuth } from '../../hooks/auth'
 
 const navigation = [
@@ -9,6 +9,7 @@ const navigation = [
   { name: 'Activities', href: '/activities', icon: ActivityIcon },
   { name: 'Group Calls', href: '/group-calls', icon: PhoneCallIcon },
   { name: 'User Reports', href: '/user-reports', icon: FlagIcon },
+  { name: 'Avatar Borders', href: '/avatar-borders', icon: PaletteIcon },
   { name: 'Promote User to Talent', href: '/verify-talent', icon: CheckCircleIcon },
 ]
 
