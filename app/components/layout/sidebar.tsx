@@ -1,5 +1,5 @@
 import { Link } from "react-router"
-import { GiftIcon, CheckCircleIcon, HomeIcon, ActivityIcon, FlagIcon, PhoneCallIcon, TagsIcon, PaletteIcon, AwardIcon } from 'lucide-react'
+import { GiftIcon, CheckCircleIcon, HomeIcon, ActivityIcon, FlagIcon, PhoneCallIcon, TagsIcon, PaletteIcon, AwardIcon, StickerIcon } from 'lucide-react'
 import { useAuth } from '../../hooks/auth'
 
 const navigation = [
@@ -11,6 +11,7 @@ const navigation = [
   { name: 'User Reports', href: '/user-reports', icon: FlagIcon },
   { name: 'Avatar Borders', href: '/avatar-borders', icon: PaletteIcon },
   { name: 'Badges', href: '/badges', icon: AwardIcon },
+  { name: 'Sticker Packs', href: '/sticker-packs', icon: StickerIcon },
   { name: 'Promote User to Talent', href: '/verify-talent', icon: CheckCircleIcon },
 ]
 
