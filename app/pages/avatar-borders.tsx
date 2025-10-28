@@ -21,6 +21,17 @@ const BORDER_TYPE_OPTIONS = [
   { value: 'special', label: 'Special' },
 ]
 
+// URL validation function
+const isValidUrl = (url: string): boolean => {
+  if (!url.trim()) return true // Allow empty URLs
+  try {
+    new URL(url)
+    return true
+  } catch {
+    return false
+  }
+}
+
 async function fetchAvatarBorders(page: number, pageSize: number): Promise<AvatarBorderResponse> {
   return apiClient.get<AvatarBorderResponse>(`gamification/avatar-borders?page=${page}&page_size=${pageSize}`)
 }
@@ -108,7 +119,7 @@ export function AvatarBordersPage() {
   }
 
   const handleSave = () => {
-    if (selectedBorder) {
+    if (selectedBorder && isValidUrl(editData.image_url || '')) {
       updateMutation.mutate({
         id: selectedBorder.id!,
         data: editData,
@@ -127,7 +138,9 @@ export function AvatarBordersPage() {
   }
 
   const handleCreateSave = () => {
-    createMutation.mutate(createData)
+    if (isValidUrl(createData.image_url)) {
+      createMutation.mutate(createData)
+    }
   }
 
   const handleCreateCancel = () => {
@@ -188,8 +201,8 @@ export function AvatarBordersPage() {
     )
   }
 
-  const borders: AvatarBorder[] = (data as any)?.data?.data?.data || []
-  const pagination = (data as any)?.data?.data?.pagination
+  const borders: AvatarBorder[] = (data as any)?.data?.data || []
+  const pagination = (data as any)?.data?.pagination
 
   return (
     <div>
@@ -403,8 +416,11 @@ export function AvatarBordersPage() {
                       value={editData.image_url || ''}
                       onChange={(e) => setEditData({ ...editData, image_url: e.target.value })}
                       placeholder="https://example.com/image.jpg"
-                      className="w-full"
+                      className={`w-full ${!isValidUrl(editData.image_url || '') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                     />
+                    {!isValidUrl(editData.image_url || '') && (editData.image_url || '').trim() && (
+                      <p className="mt-1 text-sm text-red-600">Please enter a valid URL</p>
+                    )}
                   </div>
                   
                   <div>
@@ -454,7 +470,7 @@ export function AvatarBordersPage() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={updateMutation.isPending}
+                disabled={updateMutation.isPending || !isValidUrl(editData.image_url || '')}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {updateMutation.isPending ? 'Saving...' : 'Save'}
@@ -561,8 +577,11 @@ export function AvatarBordersPage() {
                       value={createData.image_url}
                       onChange={(e) => setCreateData({ ...createData, image_url: e.target.value })}
                       placeholder="https://example.com/image.jpg"
-                      className="w-full"
+                      className={`w-full ${!isValidUrl(createData.image_url) ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                     />
+                    {!isValidUrl(createData.image_url) && createData.image_url.trim() && (
+                      <p className="mt-1 text-sm text-red-600">Please enter a valid URL</p>
+                    )}
                   </div>
                   
                   <div>
@@ -612,7 +631,7 @@ export function AvatarBordersPage() {
               </button>
               <button
                 onClick={handleCreateSave}
-                disabled={createMutation.isPending}
+                disabled={createMutation.isPending || !isValidUrl(createData.image_url)}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {createMutation.isPending ? 'Creating...' : 'Create'}
