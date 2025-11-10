@@ -13,6 +13,7 @@ export default [
   route("verify-talent", "routes/verify-talent.tsx"),
   route("avatar-borders", "routes/avatar-borders.tsx"),
   route("badges", "routes/badges.tsx"),
+  route("coin-transactions", "routes/coin-transactions.tsx"),
   route("sticker-packs", "routes/sticker-packs.tsx"),
   route("sticker-packs/:packId/stickers", "routes/sticker-packs.$packId.stickers.tsx"),
 ] satisfies RouteConfig;
