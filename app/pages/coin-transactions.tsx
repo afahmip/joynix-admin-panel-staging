@@ -7,97 +7,86 @@ import { Input } from '../components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import type { CoinTransaction, CoinTransactionResponse, CoinTransactionDetailResponse } from '../../types/app/+types/coin-transactions'
 
-const TRANSACTION_TYPE_OPTIONS = [
-  { value: 'earn', label: 'Earn' },
-  { value: 'spend', label: 'Spend' },
-  { value: 'topup', label: 'Top Up' },
-  { value: 'withdrawal', label: 'Withdrawal' },
-  { value: 'refund', label: 'Refund' },
-  { value: 'gift', label: 'Gift' },
-]
-
-const STATUS_OPTIONS = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'failed', label: 'Failed' },
-  { value: 'cancelled', label: 'Cancelled' },
-]
 
 async function fetchCoinTransactions(
   page: number,
   limit: number,
   filters: {
-    transactionType?: string
-    referenceType?: string
-    status?: string
+    fromDate?: string
+    toDate?: string
+    userId?: string
   }
 ): Promise<CoinTransactionResponse> {
   const params = new URLSearchParams()
   params.append('page', page.toString())
   params.append('limit', limit.toString())
   
-  if (filters.transactionType) {
-    params.append('transaction_type', filters.transactionType)
+  if (filters.fromDate) {
+    params.append('from_date', filters.fromDate)
   }
-  if (filters.referenceType) {
-    params.append('reference_type', filters.referenceType)
+  if (filters.toDate) {
+    params.append('to_date', filters.toDate)
   }
-  if (filters.status) {
-    params.append('status', filters.status)
+  if (filters.userId) {
+    params.append('user_id', filters.userId)
   }
   
-  return apiClient.get<CoinTransactionResponse>(`payment/transactions?${params.toString()}`)
+  // Make the API call
+  const response = await apiClient.get<CoinTransactionResponse>(`payment/admin/coin-transaction?${params.toString()}`)
+  return response
 }
 
 async function fetchTransactionDetail(id: number): Promise<CoinTransactionDetailResponse> {
-  return apiClient.get<CoinTransactionDetailResponse>(`payment/transactions/${id}`)
+  // Make the API call
+  const response = await apiClient.get<CoinTransactionDetailResponse>(`payment/admin/coin-transaction/${id}`)
+  return response
 }
 
 export function CoinTransactionsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [limit] = useState(20)
+  const [limit] = useState(100)
   
   // Initialize filters from URL parameters
-  const [transactionType, setTransactionType] = useState(searchParams.get('transaction_type') || '')
-  const [referenceType, setReferenceType] = useState(searchParams.get('reference_type') || '')
-  const [referenceTypeInput, setReferenceTypeInput] = useState(searchParams.get('reference_type') || '')
-  const [status, setStatus] = useState(searchParams.get('status') || '')
+  const [fromDate, setFromDate] = useState(searchParams.get('from_date') || '')
+  const [toDate, setToDate] = useState(searchParams.get('to_date') || '')
+  const [userId, setUserId] = useState(searchParams.get('user_id') || '')
+  const [userIdInput, setUserIdInput] = useState(searchParams.get('user_id') || '')
   const [page, setPage] = useState(parseInt(searchParams.get('page') || '1', 10))
   
   // Modal state
   const [selectedTransactionId, setSelectedTransactionId] = useState<number | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  // Debounce reference type search
-  const debounceReferenceType = useCallback(() => {
+  // Debounce user ID search
+  const debounceUserId = useCallback(() => {
     const timeoutId = setTimeout(() => {
-      setReferenceType(referenceTypeInput)
+      setUserId(userIdInput)
       setPage(1)
     }, 500)
     return () => clearTimeout(timeoutId)
-  }, [referenceTypeInput])
+  }, [userIdInput])
 
   useEffect(() => {
-    const cleanup = debounceReferenceType()
+    const cleanup = debounceUserId()
     return cleanup
-  }, [debounceReferenceType])
+  }, [debounceUserId])
 
   // Update URL when filters change
   useEffect(() => {
     const params = new URLSearchParams()
     params.set('page', page.toString())
-    if (transactionType) params.set('transaction_type', transactionType)
-    if (referenceType) params.set('reference_type', referenceType)
-    if (status) params.set('status', status)
+    if (fromDate) params.set('from_date', fromDate)
+    if (toDate) params.set('to_date', toDate)
+    if (userId) params.set('user_id', userId)
     setSearchParams(params)
-  }, [page, transactionType, referenceType, status, setSearchParams])
+  }, [page, fromDate, toDate, userId, setSearchParams])
 
   const { data, isLoading, error, isFetching } = useQuery({
-    queryKey: ['coin-transactions', page, limit, transactionType, referenceType, status],
+    queryKey: ['coin-transactions', page, limit, fromDate, toDate, userId],
     queryFn: () => fetchCoinTransactions(page, limit, {
-      transactionType,
-      referenceType,
-      status,
+      fromDate,
+      toDate,
+      userId,
     }),
   })
 
@@ -113,10 +102,10 @@ export function CoinTransactionsPage() {
   }
 
   const handleClearFilters = () => {
-    setTransactionType('')
-    setReferenceType('')
-    setReferenceTypeInput('')
-    setStatus('')
+    setFromDate('')
+    setToDate('')
+    setUserId('')
+    setUserIdInput('')
     setPage(1)
   }
 
@@ -175,58 +164,44 @@ export function CoinTransactionsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Transaction Type
+              From Date
             </label>
-            <Select value={transactionType || "all-types"} onValueChange={(value) => {
-              setTransactionType(value === "all-types" ? "" : value)
-              handleFilterChange(1)
-            }}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="All Types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all-types">All Types</SelectItem>
-                {TRANSACTION_TYPE_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              type="date"
+              value={fromDate}
+              onChange={(e) => {
+                setFromDate(e.target.value)
+                handleFilterChange(1)
+              }}
+              className="w-full"
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status
+              To Date
             </label>
-            <Select value={status || "all-status"} onValueChange={(value) => {
-              setStatus(value === "all-status" ? "" : value)
-              handleFilterChange(1)
-            }}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all-status">All Status</SelectItem>
-                {STATUS_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              type="date"
+              value={toDate}
+              onChange={(e) => {
+                setToDate(e.target.value)
+                handleFilterChange(1)
+              }}
+              className="w-full"
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Reference Type
+              User ID
             </label>
             <Input
               type="text"
-              placeholder="Search reference type..."
-              value={referenceTypeInput}
+              placeholder="Enter user ID..."
+              value={userIdInput}
               onChange={(e) => {
-                setReferenceTypeInput(e.target.value)
+                setUserIdInput(e.target.value)
               }}
               className="w-full"
             />
