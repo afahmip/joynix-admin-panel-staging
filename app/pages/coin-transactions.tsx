@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import type { CoinTransaction, CoinTransactionResponse, CoinTransactionDetailResponse } from '../../types/app/+types/coin-transactions'
 
 
-async function fetchCoinTransactions(
+async function fetchSinglePage(
   page: number,
   limit: number,
   filters: {
@@ -36,6 +36,46 @@ async function fetchCoinTransactions(
   return response
 }
 
+async function fetchAllCoinTransactions(
+  limit: number,
+  filters: {
+    fromDate?: string
+    toDate?: string
+    userId?: string
+  },
+  onProgress?: (currentPage: number, totalPages: number) => void
+): Promise<{ transactions: CoinTransaction[], totalCount: number }> {
+  let allTransactions: CoinTransaction[] = []
+  let currentPage = 1
+  let totalPages = 1
+  let totalCount = 0
+  
+  do {
+    const response = await fetchSinglePage(currentPage, limit, filters)
+    
+    if (response.data?.transactions) {
+      allTransactions = [...allTransactions, ...response.data.transactions]
+    }
+    
+    if (response.data?.pagination) {
+      totalPages = response.data.pagination.total_pages
+      totalCount = response.data.pagination.total
+      
+      // Call progress callback if provided
+      if (onProgress) {
+        onProgress(currentPage, totalPages)
+      }
+    }
+    
+    currentPage++
+  } while (currentPage <= totalPages)
+  
+  return {
+    transactions: allTransactions,
+    totalCount
+  }
+}
+
 async function fetchTransactionDetail(id: number): Promise<CoinTransactionDetailResponse> {
   // Make the API call
   const response = await apiClient.get<CoinTransactionDetailResponse>(`payment/admin/coin-transaction/${id}`)
@@ -45,13 +85,17 @@ async function fetchTransactionDetail(id: number): Promise<CoinTransactionDetail
 export function CoinTransactionsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [limit] = useState(100)
+  const [clientLimit] = useState(20) // Items per page for client-side pagination
   
   // Initialize filters from URL parameters
   const [fromDate, setFromDate] = useState(searchParams.get('from_date') || '')
   const [toDate, setToDate] = useState(searchParams.get('to_date') || '')
   const [userId, setUserId] = useState(searchParams.get('user_id') || '')
   const [userIdInput, setUserIdInput] = useState(searchParams.get('user_id') || '')
-  const [page, setPage] = useState(parseInt(searchParams.get('page') || '1', 10))
+  const [clientPage, setClientPage] = useState(parseInt(searchParams.get('page') || '1', 10))
+  
+  // Progress state for multi-page fetching
+  const [fetchProgress, setFetchProgress] = useState<{ current: number, total: number } | null>(null)
   
   // Modal state
   const [selectedTransactionId, setSelectedTransactionId] = useState<number | null>(null)
@@ -61,7 +105,7 @@ export function CoinTransactionsPage() {
   const debounceUserId = useCallback(() => {
     const timeoutId = setTimeout(() => {
       setUserId(userIdInput)
-      setPage(1)
+      setClientPage(1)
     }, 500)
     return () => clearTimeout(timeoutId)
   }, [userIdInput])
@@ -74,21 +118,30 @@ export function CoinTransactionsPage() {
   // Update URL when filters change
   useEffect(() => {
     const params = new URLSearchParams()
-    params.set('page', page.toString())
+    params.set('page', clientPage.toString())
     if (fromDate) params.set('from_date', fromDate)
     if (toDate) params.set('to_date', toDate)
     if (userId) params.set('user_id', userId)
     setSearchParams(params)
-  }, [page, fromDate, toDate, userId, setSearchParams])
+  }, [clientPage, fromDate, toDate, userId, setSearchParams])
 
-  const { data, isLoading, error, isFetching } = useQuery({
-    queryKey: ['coin-transactions', page, limit, fromDate, toDate, userId],
-    queryFn: () => fetchCoinTransactions(page, limit, {
+  const { data: allData, isLoading, error, isFetching } = useQuery({
+    queryKey: ['coin-transactions-all', limit, fromDate, toDate, userId],
+    queryFn: () => fetchAllCoinTransactions(limit, {
       fromDate,
       toDate,
       userId,
+    }, (current, total) => {
+      setFetchProgress({ current, total })
     }),
   })
+  
+  // Reset fetch progress when query succeeds
+  useEffect(() => {
+    if (allData && !isLoading) {
+      setFetchProgress(null)
+    }
+  }, [allData, isLoading])
 
   // Fetch transaction detail when modal is opened
   const { data: transactionDetail, isLoading: isDetailLoading } = useQuery({
@@ -98,7 +151,7 @@ export function CoinTransactionsPage() {
   })
 
   const handleFilterChange = (newPage = 1) => {
-    setPage(newPage)
+    setClientPage(newPage)
   }
 
   const handleClearFilters = () => {
@@ -106,7 +159,7 @@ export function CoinTransactionsPage() {
     setToDate('')
     setUserId('')
     setUserIdInput('')
-    setPage(1)
+    setClientPage(1)
   }
 
   const handleRowClick = (transaction: CoinTransaction) => {
@@ -119,11 +172,20 @@ export function CoinTransactionsPage() {
     setSelectedTransactionId(null)
   }
 
-  const transactions: CoinTransaction[] = data?.data?.transactions || []
-  const pagination = data?.data?.pagination
+  // Client-side pagination logic
+  const allTransactions: CoinTransaction[] = allData?.transactions || []
+  const totalCount = allData?.totalCount || 0
   
-  const isInitialLoading = isLoading && !data
-  const isRefetching = isFetching && data
+  const startIndex = (clientPage - 1) * clientLimit
+  const endIndex = startIndex + clientLimit
+  const transactions = allTransactions.slice(startIndex, endIndex)
+  
+  const totalPages = Math.ceil(totalCount / clientLimit)
+  const hasNext = clientPage < totalPages
+  const hasPrev = clientPage > 1
+  
+  const isInitialLoading = isLoading && !allData
+  const isRefetching = isFetching && allData
 
   const getStatusBadgeColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -222,8 +284,21 @@ export function CoinTransactionsPage() {
       <div className="mt-4 relative">
         {(isRefetching || isInitialLoading) && (
           <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10 rounded-lg">
-            <div className="text-gray-500">
-              {isInitialLoading ? 'Loading coin transactions...' : 'Loading updates...'}
+            <div className="text-gray-500 text-center">
+              {isInitialLoading ? (
+                fetchProgress ? (
+                  <div>
+                    <div>Loading coin transactions...</div>
+                    <div className="text-sm mt-1">
+                      Page {fetchProgress.current} of {fetchProgress.total}
+                    </div>
+                  </div>
+                ) : (
+                  'Loading coin transactions...'
+                )
+              ) : (
+                'Loading updates...'
+              )}
             </div>
           </div>
         )}
@@ -324,19 +399,19 @@ export function CoinTransactionsPage() {
       <div className="mt-4 flex justify-between items-center">
         <Button
           variant="outline"
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={!pagination?.has_prev}
+          onClick={() => setClientPage((p) => Math.max(1, p - 1))}
+          disabled={!hasPrev}
           className="cursor-pointer"
         >
           Previous
         </Button>
         <span className="text-sm text-gray-700">
-          Page {page} of {pagination?.total_pages || 1} (Total: {pagination?.total || 0} transactions)
+          Page {clientPage} of {totalPages || 1} (Total: {totalCount} transactions)
         </span>
         <Button
           variant="outline"
-          onClick={() => setPage((p) => p + 1)}
-          disabled={!pagination?.has_next}
+          onClick={() => setClientPage((p) => p + 1)}
+          disabled={!hasNext}
           className="cursor-pointer"
         >
           Next
