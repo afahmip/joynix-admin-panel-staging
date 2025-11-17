@@ -76,11 +76,6 @@ async function fetchAllCoinTransactions(
   }
 }
 
-async function fetchTransactionDetail(id: number): Promise<CoinTransactionDetailResponse> {
-  // Make the API call
-  const response = await apiClient.get<CoinTransactionDetailResponse>(`payment/admin/coin-transaction/${id}`)
-  return response
-}
 
 export function CoinTransactionsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -98,7 +93,7 @@ export function CoinTransactionsPage() {
   const [fetchProgress, setFetchProgress] = useState<{ current: number, total: number } | null>(null)
   
   // Modal state
-  const [selectedTransactionId, setSelectedTransactionId] = useState<number | null>(null)
+  const [selectedTransaction, setSelectedTransaction] = useState<CoinTransaction | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   // Debounce user ID search
@@ -143,12 +138,6 @@ export function CoinTransactionsPage() {
     }
   }, [allData, isLoading])
 
-  // Fetch transaction detail when modal is opened
-  const { data: transactionDetail, isLoading: isDetailLoading } = useQuery({
-    queryKey: ['transaction-detail', selectedTransactionId],
-    queryFn: () => fetchTransactionDetail(selectedTransactionId!),
-    enabled: !!selectedTransactionId && isModalOpen,
-  })
 
   const handleFilterChange = (newPage = 1) => {
     setClientPage(newPage)
@@ -163,13 +152,13 @@ export function CoinTransactionsPage() {
   }
 
   const handleRowClick = (transaction: CoinTransaction) => {
-    setSelectedTransactionId(transaction.id)
+    setSelectedTransaction(transaction)
     setIsModalOpen(true)
   }
 
   const handleCloseModal = () => {
     setIsModalOpen(false)
-    setSelectedTransactionId(null)
+    setSelectedTransaction(null)
   }
 
   // Client-side pagination logic
@@ -186,6 +175,29 @@ export function CoinTransactionsPage() {
   
   const isInitialLoading = isLoading && !allData
   const isRefetching = isFetching && allData
+
+  // Calculate user summary when user ID filter is active
+  const userSummary = userId ? (() => {
+    const userTransactions = allTransactions.filter(t => t.user_id.toString() === userId)
+    
+    // Group by transaction type and calculate totals
+    const totalsByType = userTransactions.reduce((acc, transaction) => {
+      const type = transaction.transaction_type
+      if (!acc[type]) {
+        acc[type] = 0
+      }
+      acc[type] += transaction.amount
+      return acc
+    }, {} as Record<string, number>)
+
+    return {
+      userId,
+      fromDate: fromDate || 'Not specified',
+      toDate: toDate || 'Not specified',
+      totalsByType,
+      transactionCount: userTransactions.length
+    }
+  })() : null
 
   const getStatusBadgeColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -220,6 +232,64 @@ export function CoinTransactionsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Coin Transactions</h1>
       </div>
+
+      {/* User Summary */}
+      {userSummary && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+          <h2 className="text-lg font-semibold text-blue-900 mb-4">User Summary</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* User Info */}
+            <div className="bg-white rounded-lg p-4 border border-blue-100">
+              <h3 className="font-medium text-gray-900 mb-3">User Information</h3>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <span className="text-gray-600">User ID:</span>
+                  <span className="ml-2 font-medium text-gray-900">{userSummary.userId}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Date Range:</span>
+                  <div className="ml-2 text-gray-900">
+                    <div>From: {userSummary.fromDate}</div>
+                    <div>To: {userSummary.toDate}</div>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-gray-600">Total Transactions:</span>
+                  <span className="ml-2 font-medium text-gray-900">{userSummary.transactionCount}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Transaction Totals */}
+            <div className="md:col-span-2 bg-white rounded-lg p-4 border border-blue-100">
+              <h3 className="font-medium text-gray-900 mb-3">Total Amount by Transaction Type</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {Object.entries(userSummary.totalsByType).map(([type, amount]) => (
+                  <div key={type} className="bg-gray-50 rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTransactionTypeColor(type)}`}>
+                        {type}
+                      </span>
+                    </div>
+                    <div className="mt-2">
+                      <span className={`text-lg font-bold ${amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {amount >= 0 ? '+' : ''}{amount.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {Object.keys(userSummary.totalsByType).length === 0 && (
+                <div className="text-gray-500 text-center py-4">
+                  No transactions found for this user in the selected date range.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg border border-gray-200 mb-6">
@@ -429,32 +499,28 @@ export function CoinTransactionsPage() {
             </div>
             
             <div className="px-6 py-4">
-              {isDetailLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="text-gray-500">Loading transaction details...</div>
-                </div>
-              ) : transactionDetail?.data ? (
+              {selectedTransaction ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Transaction ID</label>
-                      <p className="mt-1 text-sm text-gray-900">{transactionDetail.data.id}</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTransaction.id}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">User ID</label>
-                      <p className="mt-1 text-sm text-gray-900">{transactionDetail.data.user_id}</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTransaction.user_id}</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Username</label>
-                      <p className="mt-1 text-sm text-gray-900">{transactionDetail.data.username || '-'}</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTransaction.username || '-'}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Transaction Type</label>
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTransactionTypeColor(transactionDetail.data.transaction_type)}`}>
-                        {transactionDetail.data.transaction_type}
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTransactionTypeColor(selectedTransaction.transaction_type)}`}>
+                        {selectedTransaction.transaction_type}
                       </span>
                     </div>
                   </div>
@@ -462,12 +528,12 @@ export function CoinTransactionsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Coin Type</label>
-                      <p className="mt-1 text-sm text-gray-900">{transactionDetail.data.coin_type || '-'}</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTransaction.coin_type || '-'}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Amount</label>
-                      <p className={`mt-1 text-sm font-medium ${transactionDetail.data.amount < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                        {transactionDetail.data.amount > 0 ? '+' : ''}{transactionDetail.data.amount}
+                      <p className={`mt-1 text-sm font-medium ${selectedTransaction.amount < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        {selectedTransaction.amount > 0 ? '+' : ''}{selectedTransaction.amount}
                       </p>
                     </div>
                   </div>
@@ -475,57 +541,57 @@ export function CoinTransactionsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Balance Before</label>
-                      <p className="mt-1 text-sm text-gray-900">{transactionDetail.data.balance_before.toLocaleString()}</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTransaction.balance_before.toLocaleString()}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Balance After</label>
-                      <p className="mt-1 text-sm text-gray-900">{transactionDetail.data.balance_after.toLocaleString()}</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTransaction.balance_after.toLocaleString()}</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Reserved Balance Before</label>
-                      <p className="mt-1 text-sm text-gray-900">{transactionDetail.data.reserved_balance_before.toLocaleString()}</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTransaction.reserved_balance_before.toLocaleString()}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Reserved Balance After</label>
-                      <p className="mt-1 text-sm text-gray-900">{transactionDetail.data.reserved_balance_after.toLocaleString()}</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTransaction.reserved_balance_after.toLocaleString()}</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Reference ID</label>
-                      <p className="mt-1 text-sm text-gray-900">{transactionDetail.data.reference_id}</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTransaction.reference_id}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Reference Type</label>
-                      <p className="mt-1 text-sm text-gray-900">{transactionDetail.data.reference_type}</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTransaction.reference_type}</p>
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Description</label>
-                    <p className="mt-1 text-sm text-gray-900">{transactionDetail.data.description}</p>
+                    <p className="mt-1 text-sm text-gray-900">{selectedTransaction.description}</p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Status</label>
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(transactionDetail.data.status)}`}>
-                        {transactionDetail.data.status}
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(selectedTransaction.status)}`}>
+                        {selectedTransaction.status}
                       </span>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Created At</label>
-                      <p className="mt-1 text-sm text-gray-900">{new Date(transactionDetail.data.created_at).toLocaleString()}</p>
+                      <p className="mt-1 text-sm text-gray-900">{new Date(selectedTransaction.created_at).toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center justify-center py-8">
-                  <div className="text-red-500">Failed to load transaction details</div>
+                  <div className="text-red-500">No transaction selected</div>
                 </div>
               )}
             </div>
