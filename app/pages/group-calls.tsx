@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { API_ENDPOINTS } from '../config/api'
 import { apiClient } from '../lib/api-client'
 
@@ -182,6 +183,12 @@ export function GroupCallsPage() {
     <div>
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Group Calls</h1>
+        <Link
+          to="/group-calls/new"
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          Create Group Call
+        </Link>
       </div>
 
       <div className="mt-4">
