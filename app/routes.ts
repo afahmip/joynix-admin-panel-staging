@@ -17,4 +17,5 @@ export default [
   route("coin-transactions", "routes/coin-transactions.tsx"),
   route("sticker-packs", "routes/sticker-packs.tsx"),
   route("sticker-packs/:packId/stickers", "routes/sticker-packs.$packId.stickers.tsx"),
+  route("talent-applications", "routes/talent-applications.tsx"),
 ] satisfies RouteConfig;

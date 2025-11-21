@@ -15,6 +15,8 @@ import {
   GamepadIcon,
   FlagIcon,
   CheckCircleIcon,
+  UserCheckIcon,
+  UserIcon,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/auth'
 
@@ -47,8 +49,14 @@ const navigation: NavigationItem[] = [
       { name: 'Coin Transactions', href: '/coin-transactions', icon: CoinsIcon },
     ],
   },
-  { name: 'User Reports', href: '/user-reports', icon: FlagIcon },
-  { name: 'Promote User to Talent', href: '/verify-talent', icon: CheckCircleIcon },
+  {
+    name: 'Users & Talents',
+    icon: UserIcon,
+    children: [
+      { name: 'User Reports', href: '/user-reports', icon: FlagIcon },
+      { name: 'Talent Applications', href: '/talent-applications', icon: UserCheckIcon },
+    ],
+  },
 ]
 
 export function Sidebar() {

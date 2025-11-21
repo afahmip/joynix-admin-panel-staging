@@ -48,6 +48,10 @@ export const API_ENDPOINTS = {
   CATEGORY_BY_ID: (id: number | string) => `categories/${id}`,
   CATEGORY_CREATE_ADMIN: 'categories/admin',
   CATEGORY_ADMIN_BY_ID: (id: number | string) => `categories/admin/${id}`,
+  // Talent Applications
+  TALENT_APPLICATIONS: 'users/admin/talent-applications',
+  PROMOTE_TO_TALENT: (userId: number | string) => `users/admin/${userId}/promote-to-talent`,
+  REJECT_AS_TALENT: (userId: number | string) => `users/admin/${userId}/reject-as-talent`,
 } as const
 
 export function getAuthHeaders(accessToken?: string) {
