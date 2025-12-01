@@ -10,6 +10,7 @@ export default [
   route("gift-types", "routes/gift-types.tsx"),
   route("group-calls", "routes/group-calls.tsx"),
   route("group-calls/new", "routes/group-calls.new.tsx"),
+  route("group-calls/:id", "routes/group-calls.$id.tsx"),
   route("user-reports", "routes/user-reports.tsx"),
   route("verify-talent", "routes/verify-talent.tsx"),
   route("avatar-borders", "routes/avatar-borders.tsx"),
