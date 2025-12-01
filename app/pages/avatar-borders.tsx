@@ -21,16 +21,6 @@ const BORDER_TYPE_OPTIONS = [
   { value: 'special', label: 'Special' },
 ]
 
-// URL validation function
-const isValidUrl = (url: string): boolean => {
-  if (!url.trim()) return true // Allow empty URLs
-  try {
-    new URL(url)
-    return true
-  } catch {
-    return false
-  }
-}
 
 async function fetchAvatarBorders(page: number, pageSize: number): Promise<AvatarBorderResponse> {
   return apiClient.get<AvatarBorderResponse>(`gamification/avatar-borders?page=${page}&page_size=${pageSize}`)
@@ -45,17 +35,18 @@ export function AvatarBordersPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [borderToDelete, setBorderToDelete] = useState<AvatarBorder | null>(null)
   const [editData, setEditData] = useState<Partial<AvatarBorder>>({})
+  const [editImageFile, setEditImageFile] = useState<File | null>(null)
   const [createData, setCreateData] = useState({
     name: '',
     code: '',
     border_type: 'basic',
     rarity: 'common',
     description: '',
-    image_url: '',
     is_hidden: false,
     sort_order: 0,
     unlock_condition: '',
   })
+  const [createImageFile, setCreateImageFile] = useState<File | null>(null)
 
   const queryClient = useQueryClient()
   const { data, isLoading, error } = useQuery({
@@ -64,18 +55,55 @@ export function AvatarBordersPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<AvatarBorder> }) => 
-      apiClient.put(`gamification/avatar-borders/${id}`, data),
+    mutationFn: ({ id, data, imageFile }: { id: number; data: Partial<AvatarBorder>; imageFile?: File | null }) => {
+      const formData = new FormData()
+      
+      // Add all the form fields
+      if (data.name) formData.append('name', data.name)
+      if (data.code) formData.append('code', data.code)
+      if (data.border_type) formData.append('border_type', data.border_type)
+      if (data.rarity) formData.append('rarity', data.rarity)
+      if (data.description) formData.append('description', data.description)
+      if (data.unlock_condition) formData.append('unlock_condition', data.unlock_condition)
+      if (data.sort_order !== undefined) formData.append('sort_order', data.sort_order.toString())
+      if (data.is_hidden !== undefined) formData.append('is_hidden', data.is_hidden.toString())
+      
+      // Add image file if provided
+      if (imageFile) {
+        formData.append('image', imageFile)
+      }
+      
+      return apiClient.putFormData(`gamification/avatar-borders/${id}`, formData)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['avatar-borders'] })
       setIsModalOpen(false)
       setSelectedBorder(null)
+      setEditImageFile(null)
     },
   })
 
   const createMutation = useMutation({
-    mutationFn: (data: typeof createData) => 
-      apiClient.post('gamification/avatar-borders', data),
+    mutationFn: ({ data, imageFile }: { data: typeof createData; imageFile?: File | null }) => {
+      const formData = new FormData()
+      
+      // Add all the form fields
+      formData.append('name', data.name)
+      formData.append('code', data.code)
+      formData.append('border_type', data.border_type)
+      formData.append('rarity', data.rarity)
+      formData.append('description', data.description)
+      formData.append('unlock_condition', data.unlock_condition)
+      formData.append('sort_order', data.sort_order.toString())
+      formData.append('is_hidden', data.is_hidden.toString())
+      
+      // Add image file if provided
+      if (imageFile) {
+        formData.append('image', imageFile)
+      }
+      
+      return apiClient.postFormData('gamification/avatar-borders', formData)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['avatar-borders'] })
       setIsCreateModalOpen(false)
@@ -85,11 +113,11 @@ export function AvatarBordersPage() {
         border_type: 'basic',
         rarity: 'common',
         description: '',
-        image_url: '',
         is_hidden: false,
         sort_order: 0,
         unlock_condition: '',
       })
+      setCreateImageFile(null)
     },
   })
 
@@ -110,19 +138,20 @@ export function AvatarBordersPage() {
       border_type: border.border_type,
       rarity: border.rarity,
       description: border.description,
-      image_url: border.image_url,
       is_hidden: border.is_hidden,
       sort_order: border.sort_order,
       unlock_condition: border.unlock_condition,
     })
+    setEditImageFile(null)
     setIsModalOpen(true)
   }
 
   const handleSave = () => {
-    if (selectedBorder && isValidUrl(editData.image_url || '')) {
+    if (selectedBorder) {
       updateMutation.mutate({
         id: selectedBorder.id!,
         data: editData,
+        imageFile: editImageFile,
       })
     }
   }
@@ -131,6 +160,7 @@ export function AvatarBordersPage() {
     setIsModalOpen(false)
     setSelectedBorder(null)
     setEditData({})
+    setEditImageFile(null)
   }
 
   const handleCreateClick = () => {
@@ -138,9 +168,10 @@ export function AvatarBordersPage() {
   }
 
   const handleCreateSave = () => {
-    if (isValidUrl(createData.image_url)) {
-      createMutation.mutate(createData)
-    }
+    createMutation.mutate({
+      data: createData,
+      imageFile: createImageFile,
+    })
   }
 
   const handleCreateCancel = () => {
@@ -151,11 +182,11 @@ export function AvatarBordersPage() {
       border_type: 'basic',
       rarity: 'common',
       description: '',
-      image_url: '',
       is_hidden: false,
       sort_order: 0,
       unlock_condition: '',
     })
+    setCreateImageFile(null)
   }
 
   const handleDeleteClick = (border: AvatarBorder, e: React.MouseEvent) => {
@@ -364,7 +395,7 @@ export function AvatarBordersPage() {
                       Border Type
                     </label>
                     <Select value={editData.border_type} onValueChange={(value) => setEditData({ ...editData, border_type: value })}>
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full cursor-pointer">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -382,7 +413,7 @@ export function AvatarBordersPage() {
                       Rarity
                     </label>
                     <Select value={editData.rarity} onValueChange={(value) => setEditData({ ...editData, rarity: value })}>
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full cursor-pointer">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -410,16 +441,25 @@ export function AvatarBordersPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Image URL
+                      Image Upload
                     </label>
                     <Input
-                      value={editData.image_url || ''}
-                      onChange={(e) => setEditData({ ...editData, image_url: e.target.value })}
-                      placeholder="https://example.com/image.jpg"
-                      className={`w-full ${!isValidUrl(editData.image_url || '') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null
+                        setEditImageFile(file)
+                      }}
+                      className="w-full cursor-pointer"
                     />
-                    {!isValidUrl(editData.image_url || '') && (editData.image_url || '').trim() && (
-                      <p className="mt-1 text-sm text-red-600">Please enter a valid URL</p>
+                    {editImageFile && (
+                      <p className="mt-1 text-sm text-green-600">Selected: {editImageFile.name}</p>
+                    )}
+                    {selectedBorder?.image_url && !editImageFile && (
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-600 mb-1">Current image:</p>
+                        <img src={selectedBorder.image_url} alt="Current" className="h-16 w-16 object-cover rounded" />
+                      </div>
                     )}
                   </div>
                   
@@ -431,7 +471,7 @@ export function AvatarBordersPage() {
                       type="number"
                       value={editData.sort_order || ''}
                       onChange={(e) => setEditData({ ...editData, sort_order: parseInt(e.target.value) || 0 })}
-                      className="w-full"
+                      className="w-full cursor-pointer"
                     />
                   </div>
                 </div>
@@ -470,7 +510,7 @@ export function AvatarBordersPage() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={updateMutation.isPending || !isValidUrl(editData.image_url || '')}
+                disabled={updateMutation.isPending}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {updateMutation.isPending ? 'Saving...' : 'Save'}
@@ -524,7 +564,7 @@ export function AvatarBordersPage() {
                       Border Type
                     </label>
                     <Select value={createData.border_type} onValueChange={(value) => setCreateData({ ...createData, border_type: value })}>
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full cursor-pointer">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -542,7 +582,7 @@ export function AvatarBordersPage() {
                       Rarity
                     </label>
                     <Select value={createData.rarity} onValueChange={(value) => setCreateData({ ...createData, rarity: value })}>
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full cursor-pointer">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -571,16 +611,19 @@ export function AvatarBordersPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Image URL
+                      Image Upload
                     </label>
                     <Input
-                      value={createData.image_url}
-                      onChange={(e) => setCreateData({ ...createData, image_url: e.target.value })}
-                      placeholder="https://example.com/image.jpg"
-                      className={`w-full ${!isValidUrl(createData.image_url) ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null
+                        setCreateImageFile(file)
+                      }}
+                      className="w-full cursor-pointer"
                     />
-                    {!isValidUrl(createData.image_url) && createData.image_url.trim() && (
-                      <p className="mt-1 text-sm text-red-600">Please enter a valid URL</p>
+                    {createImageFile && (
+                      <p className="mt-1 text-sm text-green-600">Selected: {createImageFile.name}</p>
                     )}
                   </div>
                   
@@ -592,7 +635,7 @@ export function AvatarBordersPage() {
                       type="number"
                       value={createData.sort_order}
                       onChange={(e) => setCreateData({ ...createData, sort_order: parseInt(e.target.value) || 0 })}
-                      className="w-full"
+                      className="w-full cursor-pointer"
                     />
                   </div>
                 </div>
@@ -631,7 +674,7 @@ export function AvatarBordersPage() {
               </button>
               <button
                 onClick={handleCreateSave}
-                disabled={createMutation.isPending || !isValidUrl(createData.image_url)}
+                disabled={createMutation.isPending}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {createMutation.isPending ? 'Creating...' : 'Create'}

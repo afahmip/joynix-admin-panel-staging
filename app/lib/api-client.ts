@@ -108,6 +108,16 @@ class ApiClient {
     return baseHeaders
   }
 
+  private getAuthHeaders(): HeadersInit {
+    const token = this.getAuthToken()
+    if (token) {
+      return {
+        Authorization: `Bearer ${token}`,
+      }
+    }
+    return {}
+  }
+
   async request<T>(endpoint: string, options: ApiClientOptions = {}): Promise<T> {
     const url = `${API_CONFIG.BASE_URL}${endpoint}`
     const headers = this.getHeaders(options)
@@ -186,6 +196,108 @@ class ApiClient {
 
   async delete<T>(endpoint: string, options: ApiClientOptions = {}): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' })
+  }
+
+  async postFormData<T>(endpoint: string, formData: FormData, options: ApiClientOptions = {}): Promise<T> {
+    const url = `${API_CONFIG.BASE_URL}${endpoint}`
+    const authHeaders = this.getAuthHeaders()
+    
+    let response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        ...authHeaders,
+        ...options.headers,
+      },
+      body: formData,
+    })
+    
+    // Handle 401 Unauthorized - try to refresh token
+    if (response.status === 401 && options.requireAuth !== false) {
+      const refreshToken = this.getRefreshToken()
+      const userId = this.getUserId()
+      
+      if (refreshToken && userId) {
+        try {
+          const newAccessToken = await this.refreshAccessToken()
+          
+          // Retry the original request with the new token
+          response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${newAccessToken}`,
+              ...options.headers,
+            },
+            body: formData,
+          })
+        } catch (refreshError) {
+          localStorage.removeItem('joynix_admin_auth')
+          window.location.href = '/signin'
+          throw new Error('Authentication failed and token refresh unsuccessful')
+        }
+      } else {
+        localStorage.removeItem('joynix_admin_auth')
+        window.location.href = '/signin'
+        throw new Error('No refresh token available')
+      }
+    }
+    
+    if (!response.ok) {
+      const errorBody = await response.json();
+      throw new Error(errorBody && typeof errorBody === 'object' && errorBody.message ? errorBody.message : 'Request failed');
+    }
+    
+    return response.json()
+  }
+
+  async putFormData<T>(endpoint: string, formData: FormData, options: ApiClientOptions = {}): Promise<T> {
+    const url = `${API_CONFIG.BASE_URL}${endpoint}`
+    const authHeaders = this.getAuthHeaders()
+    
+    let response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        ...authHeaders,
+        ...options.headers,
+      },
+      body: formData,
+    })
+    
+    // Handle 401 Unauthorized - try to refresh token
+    if (response.status === 401 && options.requireAuth !== false) {
+      const refreshToken = this.getRefreshToken()
+      const userId = this.getUserId()
+      
+      if (refreshToken && userId) {
+        try {
+          const newAccessToken = await this.refreshAccessToken()
+          
+          // Retry the original request with the new token
+          response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+              Authorization: `Bearer ${newAccessToken}`,
+              ...options.headers,
+            },
+            body: formData,
+          })
+        } catch (refreshError) {
+          localStorage.removeItem('joynix_admin_auth')
+          window.location.href = '/signin'
+          throw new Error('Authentication failed and token refresh unsuccessful')
+        }
+      } else {
+        localStorage.removeItem('joynix_admin_auth')
+        window.location.href = '/signin'
+        throw new Error('No refresh token available')
+      }
+    }
+    
+    if (!response.ok) {
+      const errorBody = await response.json();
+      throw new Error(errorBody && typeof errorBody === 'object' && errorBody.message ? errorBody.message : 'Request failed');
+    }
+    
+    return response.json()
   }
 }
 
