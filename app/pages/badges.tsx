@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { apiClient } from '../lib/api-client'
+import { API_ENDPOINTS } from '../config/api'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Switch } from '../components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Textarea } from '../components/ui/textarea'
-import type { Badge, BadgeResponse } from '../../types/app/+types/badges'
+import type { Badge, BadgeResponse, CreateBadgeData } from '../../types/app/+types/badges'
 
 const RARITY_OPTIONS = [
   { value: 'common', label: 'Common' },
@@ -22,19 +23,28 @@ const BADGE_TYPE_OPTIONS = [
   { value: 'event', label: 'Event' },
 ]
 
-// URL validation function
-const isValidUrl = (url: string): boolean => {
-  if (!url.trim()) return true // Allow empty URLs
-  try {
-    new URL(url)
-    return true
-  } catch {
-    return false
-  }
-}
 
 async function fetchBadges(page: number, pageSize: number): Promise<BadgeResponse> {
-  return apiClient.get<BadgeResponse>(`gamification/badges?page=${page}&page_size=${pageSize}`)
+  return apiClient.get<BadgeResponse>(`${API_ENDPOINTS.BADGES}?page=${page}&page_size=${pageSize}`)
+}
+
+async function createBadge(data: CreateBadgeData): Promise<any> {
+  const formData = new FormData()
+  formData.append('code', data.code)
+  formData.append('name', data.name)
+  formData.append('description', data.description)
+  formData.append('badge_type', data.badge_type)
+  formData.append('rarity', data.rarity)
+  formData.append('unlock_condition', data.unlock_condition)
+  formData.append('sort_order', data.sort_order.toString())
+  formData.append('is_hidden', data.is_hidden.toString())
+  formData.append('metadata', data.metadata)
+  
+  if (data.image) {
+    formData.append('image', data.image)
+  }
+  
+  return apiClient.postFormData(API_ENDPOINTS.BADGES, formData)
 }
 
 export function BadgesPage() {
@@ -46,16 +56,17 @@ export function BadgesPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [badgeToDelete, setBadgeToDelete] = useState<Badge | null>(null)
   const [editData, setEditData] = useState<Partial<Badge>>({})
-  const [createData, setCreateData] = useState({
+  const [createData, setCreateData] = useState<CreateBadgeData>({
     name: '',
     code: '',
     badge_type: 'achievement',
     rarity: 'common',
     description: '',
-    image_url: '',
+    image: null,
     is_hidden: false,
     sort_order: 0,
     unlock_condition: '',
+    metadata: '',
   })
 
   const queryClient = useQueryClient()
@@ -66,7 +77,7 @@ export function BadgesPage() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<Badge> }) => 
-      apiClient.put(`gamification/badges/${id}`, data),
+      apiClient.put(API_ENDPOINTS.BADGE_BY_ID(id), data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['badges'] })
       setIsModalOpen(false)
@@ -75,8 +86,7 @@ export function BadgesPage() {
   })
 
   const createMutation = useMutation({
-    mutationFn: (data: typeof createData) => 
-      apiClient.post('gamification/badges', data),
+    mutationFn: (data: CreateBadgeData) => createBadge(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['badges'] })
       setIsCreateModalOpen(false)
@@ -86,16 +96,17 @@ export function BadgesPage() {
         badge_type: 'achievement',
         rarity: 'common',
         description: '',
-        image_url: '',
+        image: null,
         is_hidden: false,
         sort_order: 0,
         unlock_condition: '',
+        metadata: '',
       })
     },
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiClient.delete(`gamification/badges/${id}`),
+    mutationFn: (id: number) => apiClient.delete(API_ENDPOINTS.BADGE_BY_ID(id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['badges'] })
       setIsDeleteModalOpen(false)
@@ -120,7 +131,7 @@ export function BadgesPage() {
   }
 
   const handleSave = () => {
-    if (selectedBadge && isValidUrl(editData.image_url || '')) {
+    if (selectedBadge) {
       updateMutation.mutate({
         id: selectedBadge.id!,
         data: editData,
@@ -139,9 +150,7 @@ export function BadgesPage() {
   }
 
   const handleCreateSave = () => {
-    if (isValidUrl(createData.image_url)) {
-      createMutation.mutate(createData)
-    }
+    createMutation.mutate(createData)
   }
 
   const handleCreateCancel = () => {
@@ -152,10 +161,11 @@ export function BadgesPage() {
       badge_type: 'achievement',
       rarity: 'common',
       description: '',
-      image_url: '',
+      image: null,
       is_hidden: false,
       sort_order: 0,
       unlock_condition: '',
+      metadata: '',
     })
   }
 
@@ -417,11 +427,8 @@ export function BadgesPage() {
                       value={editData.image_url || ''}
                       onChange={(e) => setEditData({ ...editData, image_url: e.target.value })}
                       placeholder="https://example.com/image.jpg"
-                      className={`w-full ${!isValidUrl(editData.image_url || '') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                      className="w-full"
                     />
-                    {!isValidUrl(editData.image_url || '') && (editData.image_url || '').trim() && (
-                      <p className="mt-1 text-sm text-red-600">Please enter a valid URL</p>
-                    )}
                   </div>
                   
                   <div>
@@ -471,7 +478,7 @@ export function BadgesPage() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={updateMutation.isPending || !isValidUrl(editData.image_url || '')}
+                disabled={updateMutation.isPending}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {updateMutation.isPending ? 'Saving...' : 'Save'}
@@ -496,25 +503,27 @@ export function BadgesPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Name
+                      Name *
                     </label>
                     <Input
                       value={createData.name}
                       onChange={(e) => setCreateData({ ...createData, name: e.target.value })}
                       placeholder="Enter badge name"
                       className="w-full"
+                      required
                     />
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Code
+                      Code *
                     </label>
                     <Input
                       value={createData.code}
                       onChange={(e) => setCreateData({ ...createData, code: e.target.value })}
-                      placeholder="Enter badge code"
+                      placeholder="Enter badge code (unique identifier)"
                       className="w-full"
+                      required
                     />
                   </div>
                 </div>
@@ -522,7 +531,7 @@ export function BadgesPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Badge Type
+                      Badge Type *
                     </label>
                     <Select value={createData.badge_type} onValueChange={(value) => setCreateData({ ...createData, badge_type: value })}>
                       <SelectTrigger className="w-full">
@@ -540,7 +549,7 @@ export function BadgesPage() {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Rarity
+                      Rarity *
                     </label>
                     <Select value={createData.rarity} onValueChange={(value) => setCreateData({ ...createData, rarity: value })}>
                       <SelectTrigger className="w-full">
@@ -572,17 +581,25 @@ export function BadgesPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Image URL
+                      Badge Image *
                     </label>
-                    <Input
-                      value={createData.image_url}
-                      onChange={(e) => setCreateData({ ...createData, image_url: e.target.value })}
-                      placeholder="https://example.com/image.jpg"
-                      className={`w-full ${!isValidUrl(createData.image_url) ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null
+                        setCreateData({ ...createData, image: file })
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                     />
-                    {!isValidUrl(createData.image_url) && createData.image_url.trim() && (
-                      <p className="mt-1 text-sm text-red-600">Please enter a valid URL</p>
+                    {createData.image && (
+                      <p className="mt-1 text-sm text-gray-600">
+                        Selected: {createData.image.name}
+                      </p>
                     )}
+                    <p className="mt-1 text-xs text-gray-500">
+                      JPEG, PNG, WebP, or GIF, max 10MB
+                    </p>
                   </div>
                   
                   <div>
@@ -609,6 +626,21 @@ export function BadgesPage() {
                     className="w-full"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Metadata
+                  </label>
+                  <Textarea
+                    value={createData.metadata}
+                    onChange={(e) => setCreateData({ ...createData, metadata: e.target.value })}
+                    placeholder="Enter badge metadata as JSON string"
+                    className="w-full min-h-[80px]"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Badge metadata as JSON string
+                  </p>
+                </div>
                 
                 <div className="flex items-center space-x-2">
                   <Switch
@@ -632,7 +664,7 @@ export function BadgesPage() {
               </button>
               <button
                 onClick={handleCreateSave}
-                disabled={createMutation.isPending || !isValidUrl(createData.image_url)}
+                disabled={createMutation.isPending || !createData.image || !createData.name.trim() || !createData.code.trim()}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {createMutation.isPending ? 'Creating...' : 'Create'}

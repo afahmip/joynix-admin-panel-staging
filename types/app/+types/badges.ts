@@ -9,11 +9,25 @@ export interface Badge {
   rarity: string;
   sort_order: number;
   unlock_condition: string;
+  metadata?: string;
   earned_count?: number;
   created_at?: string;
   created_by?: string;
   updated_at?: string;
   updated_by?: string;
+}
+
+export interface CreateBadgeData {
+  code: string;
+  name: string;
+  description: string;
+  badge_type: string;
+  rarity: string;
+  unlock_condition: string;
+  sort_order: number;
+  is_hidden: boolean;
+  metadata: string;
+  image: File | null;
 }
 
 export interface BadgeResponse {

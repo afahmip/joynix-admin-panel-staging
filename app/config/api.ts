@@ -52,6 +52,9 @@ export const API_ENDPOINTS = {
   TALENT_APPLICATIONS: 'users/admin/talent-applications',
   PROMOTE_TO_TALENT: (userId: number | string) => `users/admin/${userId}/promote-to-talent`,
   REJECT_AS_TALENT: (userId: number | string) => `users/admin/${userId}/reject-as-talent`,
+  // Badges
+  BADGES: 'gamification/badges',
+  BADGE_BY_ID: (id: number | string) => `gamification/badges/${id}`,
 } as const
 
 export function getAuthHeaders(accessToken?: string) {
