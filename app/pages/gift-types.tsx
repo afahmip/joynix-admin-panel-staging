@@ -45,8 +45,8 @@ interface CreateGiftTypeData {
   name: string
   description: string
   price_coins: number
-  icon_url: string
-  animation_url: string
+  icon_image: File | null
+  animation_image: File | null
   is_active: boolean
 }
 
@@ -65,7 +65,21 @@ interface CreateApiResponse {
 }
 
 async function createGiftType(data: CreateGiftTypeData): Promise<CreateApiResponse> {
-  return apiClient.post<CreateApiResponse>(API_ENDPOINTS.GIFT_TYPES, data)
+  const formData = new FormData()
+  formData.append('name', data.name)
+  formData.append('description', data.description)
+  formData.append('price_coins', data.price_coins.toString())
+  formData.append('is_active', data.is_active.toString())
+  
+  if (data.icon_image) {
+    formData.append('icon_image', data.icon_image)
+  }
+  
+  if (data.animation_image) {
+    formData.append('animation_image', data.animation_image)
+  }
+  
+  return apiClient.postFormData<CreateApiResponse>(API_ENDPOINTS.GIFT_TYPES, formData)
 }
 
 interface DeleteApiResponse {
@@ -91,8 +105,8 @@ export function GiftTypesPage() {
     name: '',
     description: '',
     price_coins: 0,
-    icon_url: '',
-    animation_url: '',
+    icon_image: null,
+    animation_image: null,
     is_active: true,
   })
   
@@ -122,8 +136,8 @@ export function GiftTypesPage() {
         name: '',
         description: '',
         price_coins: 0,
-        icon_url: '',
-        animation_url: '',
+        icon_image: null,
+        animation_image: null,
         is_active: true,
       })
     },
@@ -178,8 +192,8 @@ export function GiftTypesPage() {
       name: '',
       description: '',
       price_coins: 0,
-      icon_url: '',
-      animation_url: '',
+      icon_image: null,
+      animation_image: null,
       is_active: true,
     })
   }
@@ -464,28 +478,42 @@ export function GiftTypesPage() {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Icon URL
+                  Icon Image
                 </label>
                 <input
-                  type="url"
-                  value={createData.icon_url}
-                  onChange={(e) => setCreateData({ ...createData, icon_url: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter icon URL"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null
+                    setCreateData({ ...createData, icon_image: file })
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 />
+                {createData.icon_image && (
+                  <p className="mt-1 text-sm text-gray-600">
+                    Selected: {createData.icon_image.name}
+                  </p>
+                )}
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Animation URL
+                  Animation File
                 </label>
                 <input
-                  type="url"
-                  value={createData.animation_url}
-                  onChange={(e) => setCreateData({ ...createData, animation_url: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter animation URL"
+                  type="file"
+                  accept="image/*,video/*,.gif"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null
+                    setCreateData({ ...createData, animation_image: file })
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 />
+                {createData.animation_image && (
+                  <p className="mt-1 text-sm text-gray-600">
+                    Selected: {createData.animation_image.name}
+                  </p>
+                )}
               </div>
               
               <div>
