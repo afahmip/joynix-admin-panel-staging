@@ -7,8 +7,22 @@ import { Input } from '../components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import type { CoinTransaction, CoinTransactionResponse, CoinTransactionDetailResponse } from '../../types/app/+types/coin-transactions'
 
+interface TransactionSummaryResponse {
+  status: number
+  success: boolean
+  message: string
+  data: {
+    user_id: number
+    total_transaction_amount: number
+    by_transaction_type: Array<{
+      transaction_type: string
+      total_amount: number
+    }>
+  }
+  metadata: null
+}
 
-async function fetchSinglePage(
+async function fetchCoinTransactions(
   page: number,
   limit: number,
   filters: {
@@ -36,61 +50,38 @@ async function fetchSinglePage(
   return response
 }
 
-async function fetchAllCoinTransactions(
-  limit: number,
+async function fetchTransactionSummary(
   filters: {
     fromDate?: string
     toDate?: string
-    userId?: string
-  },
-  onProgress?: (currentPage: number, totalPages: number) => void
-): Promise<{ transactions: CoinTransaction[], totalCount: number }> {
-  let allTransactions: CoinTransaction[] = []
-  let currentPage = 1
-  let totalPages = 1
-  let totalCount = 0
-  
-  do {
-    const response = await fetchSinglePage(currentPage, limit, filters)
-    
-    if (response.data?.transactions) {
-      allTransactions = [...allTransactions, ...response.data.transactions]
-    }
-    
-    if (response.data?.pagination) {
-      totalPages = response.data.pagination.total_pages
-      totalCount = response.data.pagination.total
-      
-      // Call progress callback if provided
-      if (onProgress) {
-        onProgress(currentPage, totalPages)
-      }
-    }
-    
-    currentPage++
-  } while (currentPage <= totalPages)
-  
-  return {
-    transactions: allTransactions,
-    totalCount
+    userId: string
   }
+): Promise<TransactionSummaryResponse> {
+  const params = new URLSearchParams()
+  params.append('user_id', filters.userId)
+  
+  if (filters.fromDate) {
+    params.append('from_date', filters.fromDate)
+  }
+  if (filters.toDate) {
+    params.append('to_date', filters.toDate)
+  }
+  
+  const response = await apiClient.get<TransactionSummaryResponse>(`payment/admin/coin-transaction/summary?${params.toString()}`)
+  return response
 }
 
 
 export function CoinTransactionsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [limit] = useState(100)
-  const [clientLimit] = useState(20) // Items per page for client-side pagination
+  const [limit] = useState(50)
   
   // Initialize filters from URL parameters
   const [fromDate, setFromDate] = useState(searchParams.get('from_date') || '')
   const [toDate, setToDate] = useState(searchParams.get('to_date') || '')
   const [userId, setUserId] = useState(searchParams.get('user_id') || '')
   const [userIdInput, setUserIdInput] = useState(searchParams.get('user_id') || '')
-  const [clientPage, setClientPage] = useState(parseInt(searchParams.get('page') || '1', 10))
-  
-  // Progress state for multi-page fetching
-  const [fetchProgress, setFetchProgress] = useState<{ current: number, total: number } | null>(null)
+  const [page, setPage] = useState(parseInt(searchParams.get('page') || '1', 10))
   
   // Modal state
   const [selectedTransaction, setSelectedTransaction] = useState<CoinTransaction | null>(null)
@@ -100,7 +91,7 @@ export function CoinTransactionsPage() {
   const debounceUserId = useCallback(() => {
     const timeoutId = setTimeout(() => {
       setUserId(userIdInput)
-      setClientPage(1)
+      setPage(1)
     }, 500)
     return () => clearTimeout(timeoutId)
   }, [userIdInput])
@@ -113,34 +104,36 @@ export function CoinTransactionsPage() {
   // Update URL when filters change
   useEffect(() => {
     const params = new URLSearchParams()
-    params.set('page', clientPage.toString())
+    params.set('page', page.toString())
     if (fromDate) params.set('from_date', fromDate)
     if (toDate) params.set('to_date', toDate)
     if (userId) params.set('user_id', userId)
     setSearchParams(params)
-  }, [clientPage, fromDate, toDate, userId, setSearchParams])
+  }, [page, fromDate, toDate, userId, setSearchParams])
 
-  const { data: allData, isLoading, error, isFetching } = useQuery({
-    queryKey: ['coin-transactions-all', limit, fromDate, toDate, userId],
-    queryFn: () => fetchAllCoinTransactions(limit, {
+  // Fetch transactions
+  const { data: transactionsData, isLoading, error, isFetching } = useQuery({
+    queryKey: ['coin-transactions', page, limit, fromDate, toDate, userId],
+    queryFn: () => fetchCoinTransactions(page, limit, {
       fromDate,
       toDate,
       userId,
-    }, (current, total) => {
-      setFetchProgress({ current, total })
     }),
   })
-  
-  // Reset fetch progress when query succeeds
-  useEffect(() => {
-    if (allData && !isLoading) {
-      setFetchProgress(null)
-    }
-  }, [allData, isLoading])
 
+  // Fetch transaction summary when user_id filter is set
+  const { data: summaryData, isLoading: isSummaryLoading } = useQuery({
+    queryKey: ['coin-transaction-summary', fromDate, toDate, userId],
+    queryFn: () => fetchTransactionSummary({
+      fromDate,
+      toDate,
+      userId: userId!,
+    }),
+    enabled: !!userId, // Only fetch when userId is set
+  })
 
   const handleFilterChange = (newPage = 1) => {
-    setClientPage(newPage)
+    setPage(newPage)
   }
 
   const handleClearFilters = () => {
@@ -148,7 +141,7 @@ export function CoinTransactionsPage() {
     setToDate('')
     setUserId('')
     setUserIdInput('')
-    setClientPage(1)
+    setPage(1)
   }
 
   const handleRowClick = (transaction: CoinTransaction) => {
@@ -161,43 +154,48 @@ export function CoinTransactionsPage() {
     setSelectedTransaction(null)
   }
 
-  // Client-side pagination logic
-  const allTransactions: CoinTransaction[] = allData?.transactions || []
-  const totalCount = allData?.totalCount || 0
+  // Extract data from response
+  const transactions: CoinTransaction[] = transactionsData?.data?.transactions || []
+  const pagination = transactionsData?.data?.pagination
+  const totalCount = pagination?.total || 0
+  const totalPages = pagination?.total_pages || 1
+  const hasNext = pagination?.has_next ?? false
+  const hasPrev = pagination?.has_prev ?? false
   
-  const startIndex = (clientPage - 1) * clientLimit
-  const endIndex = startIndex + clientLimit
-  const transactions = allTransactions.slice(startIndex, endIndex)
-  
-  const totalPages = Math.ceil(totalCount / clientLimit)
-  const hasNext = clientPage < totalPages
-  const hasPrev = clientPage > 1
-  
-  const isInitialLoading = isLoading && !allData
-  const isRefetching = isFetching && allData
+  const isInitialLoading = isLoading && !transactionsData
+  const isRefetching = isFetching && transactionsData
 
-  // Calculate user summary when user ID filter is active
-  const userSummary = userId ? (() => {
-    const userTransactions = allTransactions.filter(t => t.user_id.toString() === userId)
-    
-    // Group by transaction type and calculate totals
-    const totalsByType = userTransactions.reduce((acc, transaction) => {
-      const type = transaction.transaction_type
-      if (!acc[type]) {
-        acc[type] = 0
-      }
-      acc[type] += transaction.amount
+  // Format date helper functions
+  const formatDate = (dateString: string): string => {
+    if (!dateString) return 'Not specified'
+    const date = new Date(dateString)
+    const month = date.toLocaleDateString('en-US', { month: 'short' })
+    const day = date.getDate()
+    const year = date.getFullYear()
+    return `${month} ${day} ${year}`
+  }
+
+  const formatDateTime = (dateString: string): string => {
+    const date = new Date(dateString)
+    const month = date.toLocaleDateString('en-US', { month: 'short' })
+    const day = date.getDate()
+    const year = date.getFullYear()
+    const hours = date.getHours().toString().padStart(2, '0')
+    const minutes = date.getMinutes().toString().padStart(2, '0')
+    return `${month} ${day} ${year}, ${hours}:${minutes}`
+  }
+
+  // Build user summary from API response
+  const userSummary = userId && summaryData?.data ? {
+    userId: summaryData.data.user_id.toString(),
+    fromDate: fromDate ? formatDate(fromDate) : 'Not specified',
+    toDate: toDate ? formatDate(toDate) : 'Not specified',
+    totalAmount: summaryData.data.total_transaction_amount,
+    totalsByType: summaryData.data.by_transaction_type.reduce((acc, item) => {
+      acc[item.transaction_type] = item.total_amount
       return acc
-    }, {} as Record<string, number>)
-
-    return {
-      userId,
-      fromDate: fromDate || 'Not specified',
-      toDate: toDate || 'Not specified',
-      totalsByType,
-      transactionCount: userTransactions.length
-    }
-  })() : null
+    }, {} as Record<string, number>),
+  } : null
 
   const getStatusBadgeColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -236,7 +234,12 @@ export function CoinTransactionsPage() {
       {/* User Summary */}
       {userSummary && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-          <h2 className="text-lg font-semibold text-blue-900 mb-4">User Summary</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-blue-900">User Transaction Summary</h2>
+            {isSummaryLoading && (
+              <span className="text-sm text-blue-600">Loading summary...</span>
+            )}
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* User Info */}
@@ -255,16 +258,16 @@ export function CoinTransactionsPage() {
                   </div>
                 </div>
                 <div>
-                  <span className="text-gray-600">Total Transactions:</span>
-                  <span className="ml-2 font-medium text-gray-900">{userSummary.transactionCount}</span>
+                  <span className="text-gray-600">Total Amount:</span>
+                  <span className="ml-2 font-bold text-gray-900">{userSummary.totalAmount.toLocaleString()}</span>
                 </div>
               </div>
             </div>
 
             {/* Transaction Totals */}
             <div className="md:col-span-2 bg-white rounded-lg p-4 border border-blue-100">
-              <h3 className="font-medium text-gray-900 mb-3">Total Amount by Transaction Type</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <h3 className="font-medium text-gray-900 mb-3">Amount by Transaction Type</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {Object.entries(userSummary.totalsByType).map(([type, amount]) => (
                   <div key={type} className="bg-gray-50 rounded-lg p-3">
                     <div className="flex items-center justify-between">
@@ -298,30 +301,48 @@ export function CoinTransactionsPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               From Date
             </label>
-            <Input
-              type="date"
-              value={fromDate}
-              onChange={(e) => {
-                setFromDate(e.target.value)
-                handleFilterChange(1)
-              }}
-              className="w-full"
-            />
+            <div className="relative">
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => {
+                  setFromDate(e.target.value)
+                  handleFilterChange(1)
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+              <Input
+                type="text"
+                value={fromDate ? formatDate(fromDate) : ''}
+                readOnly
+                className="w-full cursor-pointer"
+                placeholder="Select from date"
+              />
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               To Date
             </label>
-            <Input
-              type="date"
-              value={toDate}
-              onChange={(e) => {
-                setToDate(e.target.value)
-                handleFilterChange(1)
-              }}
-              className="w-full"
-            />
+            <div className="relative">
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => {
+                  setToDate(e.target.value)
+                  handleFilterChange(1)
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+              <Input
+                type="text"
+                value={toDate ? formatDate(toDate) : ''}
+                readOnly
+                className="w-full cursor-pointer"
+                placeholder="Select to date"
+              />
+            </div>
           </div>
 
           <div>
@@ -355,20 +376,7 @@ export function CoinTransactionsPage() {
         {(isRefetching || isInitialLoading) && (
           <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10 rounded-lg">
             <div className="text-gray-500 text-center">
-              {isInitialLoading ? (
-                fetchProgress ? (
-                  <div>
-                    <div>Loading coin transactions...</div>
-                    <div className="text-sm mt-1">
-                      Page {fetchProgress.current} of {fetchProgress.total}
-                    </div>
-                  </div>
-                ) : (
-                  'Loading coin transactions...'
-                )
-              ) : (
-                'Loading updates...'
-              )}
+              {isInitialLoading ? 'Loading coin transactions...' : 'Loading updates...'}
             </div>
           </div>
         )}
@@ -451,7 +459,7 @@ export function CoinTransactionsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(transaction.created_at).toLocaleString()}
+                    {formatDateTime(transaction.created_at)}
                   </td>
                 </tr>
               ))}
@@ -469,18 +477,18 @@ export function CoinTransactionsPage() {
       <div className="mt-4 flex justify-between items-center">
         <Button
           variant="outline"
-          onClick={() => setClientPage((p) => Math.max(1, p - 1))}
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
           disabled={!hasPrev}
           className="cursor-pointer"
         >
           Previous
         </Button>
         <span className="text-sm text-gray-700">
-          Page {clientPage} of {totalPages || 1} (Total: {totalCount} transactions)
+          Page {page} of {totalPages} (Total: {totalCount} transactions)
         </span>
         <Button
           variant="outline"
-          onClick={() => setClientPage((p) => p + 1)}
+          onClick={() => setPage((p) => p + 1)}
           disabled={!hasNext}
           className="cursor-pointer"
         >

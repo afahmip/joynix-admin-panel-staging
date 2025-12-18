@@ -53,6 +53,7 @@ const navigation: NavigationItem[] = [
     name: 'Users & Talents',
     icon: UserIcon,
     children: [
+      { name: 'Users', href: '/users', icon: UserIcon },
       { name: 'User Reports', href: '/user-reports', icon: FlagIcon },
       { name: 'Talent Applications', href: '/talent-applications', icon: UserCheckIcon },
     ],
