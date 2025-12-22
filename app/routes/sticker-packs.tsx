@@ -1,6 +1,7 @@
 import type { Route } from "./+types/sticker-packs";
 import { StickerPacksPage } from "../pages/sticker-packs";
 import { DashboardLayout } from "../components/layout/dashboard-layout";
+import { RouteGuard } from "../components/route-guard";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -12,7 +13,9 @@ export function meta({}: Route.MetaArgs) {
 export default function StickerPacks() {
   return (
     <DashboardLayout>
-      <StickerPacksPage />
+      <RouteGuard resourcePath="gamifications">
+        <StickerPacksPage />
+      </RouteGuard>
     </DashboardLayout>
   );
 }

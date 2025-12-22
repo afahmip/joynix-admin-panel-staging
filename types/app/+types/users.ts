@@ -17,12 +17,12 @@ export interface User {
   is_talent: boolean
   is_talent_candidate: boolean
   is_verified: boolean
-  roles: string[]
+  roles: string[] | null
   is_available_for_booking: boolean
   timezone: string
   last_active_at: string
   created_at: string
-  services?: Service[]
+  services?: Service[] | null
 }
 
 export interface Pagination {

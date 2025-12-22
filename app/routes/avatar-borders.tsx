@@ -1,6 +1,7 @@
 import type { Route } from "./+types/avatar-borders";
 import { AvatarBordersPage } from "../pages/avatar-borders";
 import { DashboardLayout } from "../components/layout/dashboard-layout";
+import { RouteGuard } from "../components/route-guard";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -12,7 +13,9 @@ export function meta({}: Route.MetaArgs) {
 export default function AvatarBorders() {
   return (
     <DashboardLayout>
-      <AvatarBordersPage />
+      <RouteGuard resourcePath="gamifications">
+        <AvatarBordersPage />
+      </RouteGuard>
     </DashboardLayout>
   );
 }

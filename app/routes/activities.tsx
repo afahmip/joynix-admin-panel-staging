@@ -1,6 +1,7 @@
 import type { Route } from "./+types/activities";
 import { ActivitiesPage } from "../pages/activities";
 import { DashboardLayout } from "../components/layout/dashboard-layout";
+import { RouteGuard } from "../components/route-guard";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -12,7 +13,9 @@ export function meta({}: Route.MetaArgs) {
 export default function Activities() {
   return (
     <DashboardLayout>
-      <ActivitiesPage />
+      <RouteGuard resourcePath="activities">
+        <ActivitiesPage />
+      </RouteGuard>
     </DashboardLayout>
   );
 }

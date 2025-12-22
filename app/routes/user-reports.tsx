@@ -1,5 +1,6 @@
 import type { Route } from "./+types/user-reports";
 import { DashboardLayout } from "../components/layout/dashboard-layout";
+import { RouteGuard } from "../components/route-guard";
 import { UserReportsPage } from "../pages/user-reports";
 
 export function meta({}: Route.MetaArgs) {
@@ -12,9 +13,11 @@ export function meta({}: Route.MetaArgs) {
 export default function UserReports() {
   return (
     <DashboardLayout>
-      <div className="p-6">
-        <UserReportsPage />
-      </div>
+      <RouteGuard resourcePath="users.user_reports">
+        <div className="p-6">
+          <UserReportsPage />
+        </div>
+      </RouteGuard>
     </DashboardLayout>
   );
 }

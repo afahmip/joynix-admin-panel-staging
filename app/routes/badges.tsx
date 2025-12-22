@@ -1,6 +1,7 @@
 import type { Route } from "./+types/badges";
 import { BadgesPage } from "../pages/badges";
 import { DashboardLayout } from "../components/layout/dashboard-layout";
+import { RouteGuard } from "../components/route-guard";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -12,7 +13,9 @@ export function meta({}: Route.MetaArgs) {
 export default function Badges() {
   return (
     <DashboardLayout>
-      <BadgesPage />
+      <RouteGuard resourcePath="gamifications">
+        <BadgesPage />
+      </RouteGuard>
     </DashboardLayout>
   );
 }

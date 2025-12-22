@@ -2,11 +2,6 @@
 const getApiBaseUrl = () => {
   const env = import.meta.env.VITE_API_MODE || 'development'
 
-  console.log('env', env)
-  console.log('import.meta.env.VITE_API_BASE_URL_PROD', import.meta.env.VITE_API_BASE_URL_PROD)
-  console.log('import.meta.env.VITE_API_BASE_URL_STAGING', import.meta.env.VITE_API_BASE_URL_STAGING)
-  console.log('import.meta.env.VITE_API_BASE_URL_DEV', import.meta.env.VITE_API_BASE_URL_DEV)
-
   switch (env) {
     case 'production':
       return import.meta.env.VITE_API_BASE_URL_PROD || 'https://api.joynix.id/api/v1/'
@@ -55,6 +50,8 @@ export const API_ENDPOINTS = {
   // Badges
   BADGES: 'gamification/badges',
   BADGE_BY_ID: (id: number | string) => `gamification/badges/${id}`,
+  // Resources
+  RESOURCES: 'internal/admin/resources',
 } as const
 
 export function getAuthHeaders(accessToken?: string) {

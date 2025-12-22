@@ -262,7 +262,7 @@ export function UsersPage() {
                     ) : (
                       <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
                         <span className="text-gray-500 text-xs font-medium">
-                          {user.username.substring(0, 2).toUpperCase()}
+                          {user.username ? user.username.substring(0, 2).toUpperCase() : 'NA'}
                         </span>
                       </div>
                     )}
@@ -293,7 +293,7 @@ export function UsersPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.roles.length > 0 ? (
+                    {user.roles && Array.isArray(user.roles) && user.roles.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {user.roles.map((role: string, idx: number) => (
                           <span key={idx} className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
@@ -367,7 +367,7 @@ export function UsersPage() {
                     ) : (
                       <div className="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center">
                         <span className="text-gray-500 text-xl font-medium">
-                          {selectedUser.username.substring(0, 2).toUpperCase()}
+                          {selectedUser.username ? selectedUser.username.substring(0, 2).toUpperCase() : 'NA'}
                         </span>
                       </div>
                     )}
@@ -434,7 +434,7 @@ export function UsersPage() {
                   {/* Roles */}
                   <div>
                     <h5 className="text-sm font-semibold text-gray-900 mb-3 uppercase">Roles</h5>
-                    {selectedUser.roles.length > 0 ? (
+                    {selectedUser.roles && Array.isArray(selectedUser.roles) && selectedUser.roles.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
                         {selectedUser.roles.map((role: string, idx: number) => (
                           <span key={idx} className="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-purple-100 text-purple-800">
@@ -448,7 +448,7 @@ export function UsersPage() {
                   </div>
 
                   {/* Services (for talents) */}
-                  {selectedUser.services && selectedUser.services.length > 0 && (
+                  {selectedUser.services && Array.isArray(selectedUser.services) && selectedUser.services.length > 0 && (
                     <div>
                       <h5 className="text-sm font-semibold text-gray-900 mb-3 uppercase">Services</h5>
                       <div className="space-y-3">

@@ -1,5 +1,6 @@
 import type { Route } from "./+types/group-calls.$id";
 import { DashboardLayout } from "../components/layout/dashboard-layout";
+import { RouteGuard } from "../components/route-guard";
 import { GroupCallDetailPage } from "../pages/group-call-detail";
 
 export function meta({ params }: Route.MetaArgs) {
@@ -12,9 +13,11 @@ export function meta({ params }: Route.MetaArgs) {
 export default function GroupCallDetail({ params }: Route.ComponentProps) {
   return (
     <DashboardLayout>
-      <div className="p-6">
-        <GroupCallDetailPage id={parseInt(params.id)} />
-      </div>
+      <RouteGuard resourcePath="group_calls">
+        <div className="p-6">
+          <GroupCallDetailPage id={parseInt(params.id)} />
+        </div>
+      </RouteGuard>
     </DashboardLayout>
   );
 }

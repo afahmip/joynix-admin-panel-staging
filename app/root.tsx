@@ -9,6 +9,7 @@ import {
 
 import type { Route } from "./+types/root";
 import { AuthProvider } from "./hooks/auth";
+import { ResourcesProvider } from "./hooks/use-resources";
 import { TanstackQueryProvider } from "./integrations/tanstack-query/root-provider";
 import "./app.css";
 
@@ -47,7 +48,9 @@ export default function App() {
   return (
     <TanstackQueryProvider>
       <AuthProvider>
-        <Outlet />
+        <ResourcesProvider>
+          <Outlet />
+        </ResourcesProvider>
       </AuthProvider>
     </TanstackQueryProvider>
   );

@@ -19,22 +19,25 @@ import {
   UserIcon,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/auth'
+import { useResources } from '../../hooks/use-resources'
 
 type NavigationItem = {
   name: string
   href?: string
   icon: typeof HomeIcon
-  children?: Array<{ name: string; href: string; icon?: typeof HomeIcon }>
+  resourcePath?: string
+  children?: Array<{ name: string; href: string; icon?: typeof HomeIcon; resourcePath?: string }>
 }
 
 const navigation: NavigationItem[] = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
-  { name: 'Categories', href: '/categories', icon: TagsIcon },
-  { name: 'Activities', href: '/activities', icon: ActivityIcon },
-  { name: 'Group Calls', href: '/group-calls', icon: PhoneCallIcon },
+  { name: 'Categories', href: '/categories', icon: TagsIcon, resourcePath: 'categories' },
+  { name: 'Activities', href: '/activities', icon: ActivityIcon, resourcePath: 'activities' },
+  { name: 'Group Calls', href: '/group-calls', icon: PhoneCallIcon, resourcePath: 'group_calls' },
   {
     name: 'Gamification',
     icon: GamepadIcon,
+    resourcePath: 'gamifications',
     children: [
       { name: 'Gift Types', href: '/gift-types', icon: GiftIcon },
       { name: 'Avatar Borders', href: '/avatar-borders', icon: PaletteIcon },
@@ -45,6 +48,7 @@ const navigation: NavigationItem[] = [
   {
     name: 'Payments',
     icon: CoinsIcon,
+    resourcePath: 'payments',
     children: [
       { name: 'Coin Transactions', href: '/coin-transactions', icon: CoinsIcon },
     ],
@@ -54,14 +58,15 @@ const navigation: NavigationItem[] = [
     icon: UserIcon,
     children: [
       { name: 'Users', href: '/users', icon: UserIcon },
-      { name: 'User Reports', href: '/user-reports', icon: FlagIcon },
-      { name: 'Talent Applications', href: '/talent-applications', icon: UserCheckIcon },
+      { name: 'User Reports', href: '/user-reports', icon: FlagIcon, resourcePath: 'users.user_reports' },
+      { name: 'Talent Applications', href: '/talent-applications', icon: UserCheckIcon, resourcePath: 'users.talent_applications' },
     ],
   },
 ]
 
 export function Sidebar() {
   const { signout } = useAuth()
+  const { canAccess, isLoading } = useResources()
   const location = useLocation()
   const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({})
 
@@ -76,6 +81,45 @@ export function Sidebar() {
     signout()
     window.location.href = '/signin'
   }
+
+  const filterNavigation = (items: NavigationItem[]): NavigationItem[] => {
+    return items
+      .filter((item) => {
+        // Dashboard is always visible
+        if (item.href === '/') return true
+        
+        // If item has no resourcePath, it's always visible
+        if (!item.resourcePath) {
+          // But if it has children, check if any child is accessible
+          if (item.children) {
+            const filteredChildren = item.children.filter((child) => {
+              if (!child.resourcePath) return true
+              return canAccess(child.resourcePath)
+            })
+            return filteredChildren.length > 0
+          }
+          return true
+        }
+        
+        // Check if user has access to this resource
+        return canAccess(item.resourcePath)
+      })
+      .map((item) => {
+        // Filter children if they exist
+        if (item.children) {
+          return {
+            ...item,
+            children: item.children.filter((child) => {
+              if (!child.resourcePath) return true
+              return canAccess(child.resourcePath)
+            }),
+          }
+        }
+        return item
+      })
+  }
+
+  const filteredNavigation = isLoading ? [] : filterNavigation(navigation)
   
   return (
     <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200">
@@ -83,7 +127,12 @@ export function Sidebar() {
         <h1 className="text-xl font-bold text-gray-900">Joynix Admin</h1>
       </div>
       <nav className="flex-1 space-y-1 px-2 py-4">
-        {navigation.map((item) => {
+        {isLoading ? (
+          <div className="flex items-center justify-center py-4">
+            <p className="text-sm text-gray-500">Loading...</p>
+          </div>
+        ) : (
+          filteredNavigation.map((item) => {
           const isActive = item.href && location.pathname === item.href
           const hasActiveChild = item.children?.some((child) => location.pathname === child.href)
           const isDropdownOpen = item.children ? (openDropdowns[item.name] ?? !!hasActiveChild) : false
@@ -149,7 +198,8 @@ export function Sidebar() {
               {item.name}
             </Link>
           )
-        })}
+        })
+        )}
       </nav>
       <div className="px-2 py-4 border-t border-gray-200">
         <button

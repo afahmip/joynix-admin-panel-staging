@@ -1,6 +1,7 @@
 import type { Route } from "./+types/coin-transactions";
 import { CoinTransactionsPage } from "../pages/coin-transactions";
 import { DashboardLayout } from "../components/layout/dashboard-layout";
+import { RouteGuard } from "../components/route-guard";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -12,7 +13,9 @@ export function meta({}: Route.MetaArgs) {
 export default function CoinTransactions() {
   return (
     <DashboardLayout>
-      <CoinTransactionsPage />
+      <RouteGuard resourcePath="payments">
+        <CoinTransactionsPage />
+      </RouteGuard>
     </DashboardLayout>
   );
 }

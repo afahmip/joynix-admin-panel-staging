@@ -1,5 +1,6 @@
 import type { Route } from "./+types/verify-talent";
 import { DashboardLayout } from "../components/layout/dashboard-layout";
+import { RouteGuard } from "../components/route-guard";
 import { VerifyTalentPage } from "../pages/verify-talent";
 
 export function meta({}: Route.MetaArgs) {
@@ -12,9 +13,11 @@ export function meta({}: Route.MetaArgs) {
 export default function VerifyTalent() {
   return (
     <DashboardLayout>
-      <div className="p-6">
-        <VerifyTalentPage />
-      </div>
+      <RouteGuard resourcePath="users.talent_applications">
+        <div className="p-6">
+          <VerifyTalentPage />
+        </div>
+      </RouteGuard>
     </DashboardLayout>
   );
 }
